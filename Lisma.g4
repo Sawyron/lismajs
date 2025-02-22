@@ -1,9 +1,10 @@
 grammar Lisma;
 prog: state+ EOF;
 state:
-	'state' ID LPAREN expr RPAREN LBRACKET (diff_def | alg_def)* RBRACKET 'from' ID (
+	'state' ID LPAREN expr RPAREN LBRACKET statement* RBRACKET 'from' ID (
 		',' ID
 	)*;
+statement: (diff_def | alg_def) DELIMITER;
 diff_def: ID '\'' '=' expr;
 alg_def: ID '=' expr;
 expr:
@@ -34,4 +35,5 @@ RPAREN: ')';
 LBRACKET: '{';
 RBRACKET: '}';
 FORMAT: [\r\n\t ]+ -> skip;
+DELIMITER: ';';
 NUMBER: SIGN? [0-9]+ ('.' [0-9]+)?;

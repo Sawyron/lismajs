@@ -19,7 +19,7 @@ describe('lisma parsing', () => {
   it('should parse expr', () => {
     const program = `
       state a (y >= 3) {
-        x' = 3
+        x' = 3;
       }
     from b, c`;
 
