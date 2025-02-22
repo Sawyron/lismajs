@@ -9,14 +9,12 @@ diff_def: ID '\'' '=' expr;
 alg_def: ID '=' expr;
 expr:
 	expr BIN_OP expr
-	| NUMBER
-	| LPAREN expr RPAREN
+	| ID LPAREN (expr (',' expr+)*)? RPAREN
 	| L_UN_OP expr
-	| ID LPAREN expr* RPAREN
-	| ID;
+	| LPAREN expr RPAREN
+	| ID
+	| NUMBER;
 ID: [a-zA-Z_$]([a-zA-Z_$0-9])*;
-L_UN_OP: '!' | SIGN;
-SIGN: '+' | '-';
 BIN_OP:
 	SIGN
 	| '*'
@@ -30,6 +28,8 @@ BIN_OP:
 	| '<='
 	| '>'
 	| '>=';
+SIGN: '+' | '-';
+L_UN_OP: '!' | SIGN;
 LPAREN: '(';
 RPAREN: ')';
 LBRACKET: '{';

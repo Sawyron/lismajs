@@ -18,10 +18,9 @@ describe('lisma parsing', () => {
 
   it('should parse expr', () => {
     const program = `
-      state a (y >= 3) {
-        x' = 3;
-      }
-    from b, c`;
+      state a (y > 3) {
+        x' = 4 + 8 * sin(u, i);
+      } from b, c`;
 
     walkOnText(walker, program, config);
 
