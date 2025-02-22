@@ -26,6 +26,7 @@ function walkOnText<T extends ParseTreeListener>(
 
   const { lexerErrorListener } = config;
   if (lexerErrorListener) {
+    lexer.removeErrorListeners();
     lexer.addErrorListener(lexerErrorListener);
   }
 
@@ -34,6 +35,7 @@ function walkOnText<T extends ParseTreeListener>(
   const parser = new LismaParser(tokens);
   const { parserErrorListener } = config;
   if (parserErrorListener) {
+    parser.removeErrorListeners();
     parser.addErrorListener(parserErrorListener);
   }
 
