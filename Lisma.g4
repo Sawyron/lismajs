@@ -14,6 +14,7 @@ expr:
 	| ID LPAREN expr* RPAREN
 	| ID;
 ID: [a-zA-Z_$]([a-zA-Z_$0-9])*;
+L_UN_OP: '!' | SIGN;
 SIGN: '+' | '-';
 BIN_OP:
 	SIGN
@@ -28,7 +29,6 @@ BIN_OP:
 	| '<='
 	| '>'
 	| '>=';
-L_UN_OP: '!';
 LPAREN: '(';
 RPAREN: ')';
 LBRACKET: '{';
