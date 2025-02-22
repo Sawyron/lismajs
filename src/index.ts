@@ -6,16 +6,17 @@ import {
   ParseTreeWalker,
   Token,
 } from 'antlr4';
-import { ExprEvalListener } from './ExprEvalListener';
 import LismaLexer from './gen/LismaLexer';
 import LismaParser from './gen/LismaParser';
+import { LismaErrorListener } from './LismaErrorListener';
+import { LismaError } from './types/LismaError';
 
-export type CompileConfig = {
+type CompileConfig = {
   lexerErrorListener?: ErrorListener<number>;
   parserErrorListener?: ErrorListener<Token>;
 };
 
-export function walkOnText<T extends ParseTreeListener>(
+function walkOnText<T extends ParseTreeListener>(
   walker: T,
   source: string,
   config: CompileConfig = {}
@@ -39,3 +40,5 @@ export function walkOnText<T extends ParseTreeListener>(
   const tree = parser.prog();
   ParseTreeWalker.DEFAULT.walk(walker, tree);
 }
+
+export { CompileConfig, walkOnText, LismaErrorListener, LismaError };
