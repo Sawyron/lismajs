@@ -1,4 +1,5 @@
-import { ErrorListener, RecognitionException, Recognizer, Token } from 'antlr4';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { ErrorListener, RecognitionException, Recognizer } from 'antlr4';
 import { LismaError } from './types/LismaError';
 
 export class LismaErrorListener<T> extends ErrorListener<T> {
