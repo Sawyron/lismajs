@@ -1,3 +1,6 @@
 node_modules
 .antlr
 *.g4
+.prettierrc
+*.config.{js,mjs,cjs,ts}
+*.test.{js,mjs,cjs,ts}
