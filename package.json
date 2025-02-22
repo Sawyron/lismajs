@@ -6,7 +6,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "generate": "rimraf ./src/gen && antlr4 -Dlanguage=TypeScript -o src/gen Lisma.g4",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "prepublishOnly": "npm run generate"
   },
   "type": "module",
   "keywords": [],
