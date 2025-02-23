@@ -17,24 +17,42 @@ describe('Lisma parser', () => {
     const exprContext = parser.expr();
 
     expect(exprContext.expr_list().length).toBe(2);
-    expect(exprContext.expr_list()[0].NUMBER().getText()).toBe('1');
-    expect(exprContext.expr_list()[1].NUMBER().getText()).toBe('2');
+    expect(exprContext.expr(0).NUMBER().getText()).toBe('1');
+    expect(exprContext.expr(1).NUMBER().getText()).toBe('2');
     expect(exprContext.BIN_OP().getText()).toBe('+');
   });
 
   it('should parse diff definition', () => {
     const code = "x' = 3 * y";
-
     const parser = createParserFromSource(code);
 
     const diffDefContext = parser.diffDef();
     expect(diffDefContext.ID().getText()).toBe('x');
-
     expect(diffDefContext.getChild(1).getText()).toBe("'");
+
     const exprContext = diffDefContext.expr();
     expect(exprContext.expr_list().length).toBe(2);
-    expect(exprContext.expr_list()[0].NUMBER().getText()).toBe('3');
-    expect(exprContext.expr_list()[1].ID().getText()).toBe('y');
+    expect(exprContext.expr(0).NUMBER().getText()).toBe('3');
+    expect(exprContext.expr(1).ID().getText()).toBe('y');
     expect(exprContext.BIN_OP().getText()).toBe('*');
+  });
+
+  it('should parse empty state', () => {
+    const code = 'state f1(x > y) {} from f3, f4';
+    const parser = createParserFromSource(code);
+
+    const stateContext = parser.state_();
+
+    expect(stateContext.ID_list().length).toBe(3);
+    expect(stateContext.ID(0).getText()).toBe('f1');
+
+    expect(stateContext.expr().expr_list().length).toBe(2);
+    expect(stateContext.expr().expr(0).ID().getText()).toBe('x');
+    expect(stateContext.expr().expr(1).ID().getText()).toBe('y');
+    expect(stateContext.expr().BIN_OP().getText()).toBe('>');
+
+    expect(stateContext.statement_list().length).toBe(0);
+    expect(stateContext.ID(1).getText()).toBe('f3');
+    expect(stateContext.ID(2).getText()).toBe('f4');
   });
 });
