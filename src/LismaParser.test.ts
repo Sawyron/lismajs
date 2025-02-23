@@ -2,12 +2,12 @@ import { CharStream, CommonTokenStream } from 'antlr4';
 import LismaLexer from './gen/LismaLexer';
 import LismaParser from './gen/LismaParser';
 
-const createParserFromSource = (source: string) => {
+function createParserFromSource(source: string): LismaParser {
   const charStream = new CharStream(source);
   const lexer = new LismaLexer(charStream);
   const tokenStream = new CommonTokenStream(lexer);
   return new LismaParser(tokenStream);
-};
+}
 
 describe('Lisma parser', () => {
   it('should parse expression', () => {

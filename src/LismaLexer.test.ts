@@ -1,11 +1,11 @@
 import { CharStream, Token } from 'antlr4';
 import LismaLexer from './gen/LismaLexer';
 
-const getTokens = (source: string): Token[] => {
+function getTokens(source: string): Token[] {
   const chars = new CharStream(source);
   const lexer = new LismaLexer(chars);
   return lexer.getAllTokens();
-};
+}
 
 describe('token parsing', () => {
   it('should parse expr', () => {
