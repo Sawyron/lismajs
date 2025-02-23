@@ -9,7 +9,8 @@ diffDef: ID '\'' '=' expr;
 algDef: ID '=' expr;
 expr:
 	expr BIN_OP expr
-	| ID LPAREN (expr (',' expr+)*)? RPAREN
+	| ID LPAREN expr (',' expr+)* RPAREN
+	| ID LPAREN RPAREN
 	| L_UN_OP expr
 	| LPAREN expr RPAREN
 	| ID
