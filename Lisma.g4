@@ -15,6 +15,7 @@ expr:
 	| ID
 	| NUMBER;
 ID: [a-zA-Z_$]([a-zA-Z_$0-9])*;
+fragment SIGN: '+' | '-';
 BIN_OP:
 	SIGN
 	| '*'
@@ -29,7 +30,6 @@ BIN_OP:
 	| '>'
 	| '>=';
 L_UN_OP: '!' | SIGN;
-fragment SIGN: '+' | '-';
 LPAREN: '(';
 RPAREN: ')';
 LBRACKET: '{';
