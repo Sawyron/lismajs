@@ -37,6 +37,16 @@ describe('Lisma parser', () => {
     expect(exprContext.BIN_OP().getText()).toBe('*');
   });
 
+  it('shoudl parse intial condition', () => {
+    const code = 'x(t0) = 4;';
+    const parser = createParserFromSource(code);
+
+    const conditionContext = parser.initCond();
+
+    expect(conditionContext.ID().getText()).toBe('x');
+    expect(conditionContext.expr().getText()).toBe('4');
+  });
+
   it('should parse empty state', () => {
     const code = 'state f1(x > y) {} from f3, f4';
     const parser = createParserFromSource(code);
@@ -52,6 +62,7 @@ describe('Lisma parser', () => {
     expect(stateContext.expr().BIN_OP().getText()).toBe('>');
 
     expect(stateContext.statement_list().length).toBe(0);
+
     expect(stateContext.ID(1).getText()).toBe('f3');
     expect(stateContext.ID(2).getText()).toBe('f4');
   });

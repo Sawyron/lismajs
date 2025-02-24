@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "npm run generate && jest",
+    "test": "jest",
     "generate": "rimraf ./src/gen && antlr4 -Dlanguage=TypeScript -o src/gen Lisma.g4",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

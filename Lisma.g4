@@ -4,9 +4,10 @@ state:
 	'state' ID LPAREN expr RPAREN LBRACKET statement* RBRACKET 'from' ID (
 		',' ID
 	)*;
-statement: (diffDef | algDef) DELIMITER;
+statement: (diffDef | algDef | initCond) DELIMITER;
 diffDef: ID '\'' '=' expr;
 algDef: ID '=' expr;
+initCond: ID '(' 't0' ')' '=' expr;
 expr:
 	expr BIN_OP expr
 	| ID LPAREN expr (',' expr+)* RPAREN
