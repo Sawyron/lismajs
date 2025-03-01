@@ -18,6 +18,7 @@ expr:
 	| LPAREN expr RPAREN
 	| ID
 	| NUMBER;
+
 ID: [a-zA-Z_$]([a-zA-Z_$0-9])*;
 fragment SIGN: '+' | '-';
 BIN_OP:
