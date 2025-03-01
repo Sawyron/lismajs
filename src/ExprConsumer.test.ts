@@ -11,7 +11,7 @@ import LismaListener from './gen/LismaListener';
 
 function runConsumerOnSource(
   source: string,
-  consumer: ExprConsumer,
+  consumer: (expr: ExprContext) => void,
   treeFactory: (parser: LismaParser) => ParseTree
 ) {
   const charStream = new CharStream(source);
@@ -24,22 +24,13 @@ function runConsumerOnSource(
 }
 
 class TestListener extends LismaListener {
-  constructor(private readonly consumer: ExprConsumer) {
+  constructor(private readonly consumer: (expr: ExprContext) => void) {
     super();
   }
 
-  enterExpr = (ctx: ExprContext) => {
-    if (ctx.LPAREN()) {
-      this.consumer.enterBrace();
-    }
-  };
-
   exitExpr = (ctx: ExprContext) => {
-    if (ctx.RPAREN()) {
-      this.consumer.exitBrace();
-    } else {
-      this.consumer.consume(ctx);
-    }
+    this.consumer(ctx);
+    console.log(`exited expr: ${ctx.getText()}`);
   };
 }
 
@@ -47,8 +38,29 @@ describe('ExprParser', () => {
   it('should proceess simple expr', () => {
     const code = '1 + 2 * 3 / (4 - 5)';
     const consumer = new ExprConsumer();
-    runConsumerOnSource(code, consumer, parser => parser.expr());
+    runConsumerOnSource(
+      code,
+      ctx => consumer.consume(ctx),
+      parser => parser.expr()
+    );
+
     const tokens = consumer.getTokens();
-    expect(tokens).toStrictEqual(['1', '2', '3', '4', '5', '-', '/', '*', '+']);
+    const t = tokens.join('');
+
+    expect(tokens).toStrictEqual(['1', '2', '3', '*', '4', '5', '-', '/', '+']);
+  });
+
+  it('should parse simple unary operator expr', () => {
+    const code = '!it + 1';
+    const consumer = new ExprConsumer();
+    runConsumerOnSource(
+      code,
+      ctx => consumer.consume(ctx),
+      parser => parser.expr()
+    );
+
+    const tokens = consumer.getTokens();
+
+    expect(tokens).toStrictEqual(['it', '!', '1', '+']);
   });
 });

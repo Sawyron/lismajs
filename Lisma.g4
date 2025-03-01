@@ -11,29 +11,33 @@ algDef: ID '=' expr;
 initCond: ID '(' 't0' ')' '=' expr;
 constDef: 'const' ID '=' expr DELIMITER;
 expr:
-	expr BIN_OP expr
+	LPAREN expr RPAREN
+	| luop = ('!' | '+' | '-') expr
 	| ID LPAREN expr (',' expr+)* RPAREN
 	| ID LPAREN RPAREN
-	| L_UN_OP expr
-	| LPAREN expr RPAREN
+	| expr bop = '^' expr
+	| expr bop = ('*' | '/') expr
+	| expr bop = ('+' | '-') expr
+	| expr bop = ('==' | '!=' | '<' | '<=' | '>' | '>=') expr
+	| expr bop = ('&&' | '||') expr
 	| ID
 	| NUMBER;
 
 ID: [a-zA-Z_$]([a-zA-Z_$0-9])*;
 fragment SIGN: '+' | '-';
 BIN_OP:
-	SIGN
+	'^'
 	| '*'
 	| '/'
-	| '&&'
-	| '||'
-	| '^'
+	| SIGN
 	| '=='
 	| '!='
 	| '<'
 	| '<='
 	| '>'
-	| '>=';
+	| '>='
+	| '||'
+	| '&&';
 L_UN_OP: '!' | SIGN;
 LPAREN: '(';
 RPAREN: ')';
