@@ -30,7 +30,6 @@ class TestListener extends LismaListener {
 
   exitExpr = (ctx: ExprContext) => {
     this.consumer(ctx);
-    console.log(`exited expr: ${ctx.getText()}`);
   };
 }
 
@@ -45,7 +44,6 @@ describe('ExprParser', () => {
     );
 
     const tokens = consumer.getTokens();
-    const t = tokens.join('');
 
     expect(tokens).toStrictEqual(['1', '2', '3', '*', '4', '5', '-', '/', '+']);
   });

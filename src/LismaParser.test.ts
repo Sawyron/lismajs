@@ -19,7 +19,7 @@ describe('Lisma parser', () => {
     expect(exprContext.expr_list().length).toBe(2);
     expect(exprContext.expr(0).NUMBER().getText()).toBe('1');
     expect(exprContext.expr(1).NUMBER().getText()).toBe('2');
-    expect(exprContext.BIN_OP().getText()).toBe('+');
+    expect(exprContext._bop.text).toBe('+');
   });
 
   it('should parse diff definition', () => {
@@ -34,7 +34,7 @@ describe('Lisma parser', () => {
     expect(exprContext.expr_list().length).toBe(2);
     expect(exprContext.expr(0).NUMBER().getText()).toBe('3');
     expect(exprContext.expr(1).ID().getText()).toBe('y');
-    expect(exprContext.BIN_OP().getText()).toBe('*');
+    expect(exprContext._bop.text).toBe('*');
   });
 
   it('shoudl parse intial condition', () => {
@@ -59,7 +59,7 @@ describe('Lisma parser', () => {
     expect(stateContext.expr().expr_list().length).toBe(2);
     expect(stateContext.expr().expr(0).ID().getText()).toBe('x');
     expect(stateContext.expr().expr(1).ID().getText()).toBe('y');
-    expect(stateContext.expr().BIN_OP().getText()).toBe('>');
+    expect(stateContext.expr()._bop.text).toBe('>');
 
     expect(stateContext.statement_list().length).toBe(0);
 
