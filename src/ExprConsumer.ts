@@ -9,18 +9,17 @@ export class ExprConsumer {
     } else if (context.NUMBER()) {
       this.exprStack.push(context.NUMBER().getText());
     } else if (context._luop) {
-      const operand = this.exprStack.pop()!;
       const operation = context._luop.text;
-      this.exprStack.push(`${operand} ${operation}`);
+      this.exprStack.push(operation);
     } else if (context._bop) {
-      const left = this.exprStack.pop()!;
-      const right = this.exprStack.pop()!;
       const opearation = context._bop.text;
-      this.exprStack.push(`${right} ${left} ${opearation}`);
+      this.exprStack.push(opearation);
     }
   }
 
   public getTokens(): string[] {
-    return this.exprStack.join('').split(' ');
+    const output = [...this.exprStack];
+    this.exprStack.splice(0, this.exprStack.length);
+    return output;
   }
 }
