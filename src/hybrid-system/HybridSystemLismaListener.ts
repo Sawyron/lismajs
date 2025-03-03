@@ -1,16 +1,41 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import LismaListener from '../gen/LismaListener';
-import { DiffDefContext, ExprContext, StateContext } from '../gen/LismaParser';
+import {
+  ConstDefContext,
+  DiffDefContext,
+  ExprContext,
+  InitCondContext,
+  StateContext,
+} from '../gen/LismaParser';
+import { Constant } from './types/Consant';
 import { DiffVariable } from './types/DiffVariable';
+import { HybridSystem } from './types/HybridSystem';
 import { State } from './types/State';
 
 export default class HybridSystemLismaListener extends LismaListener {
   private readonly states: State[] = [];
   private readonly diffStack: DiffVariable[] = [];
   private readonly exprStack: string[] = [];
+  private readonly constants: Constant[] = [];
+  private readonly initials = new Map<string, string[]>();
 
-  public getStates(): State[] {
-    return [...this.states];
+  public getSystem(): HybridSystem {
+    const initials = new Map(this.initials);
+    this.states
+      .flatMap(s => s.diffVariables)
+      .forEach(diffVar => {
+        if (!initials.has(diffVar.name)) {
+          initials.set(diffVar.name, ['0']);
+        }
+      });
+    return {
+      diffVariableNames: [
+        ...new Set(this.states.flatMap(s => s.diffVariables).map(d => d.name)),
+      ],
+      states: [...this.states],
+      constants: [...this.constants],
+      initials: initials,
+    };
   }
 
   enterState = (ctx: StateContext) => {
@@ -56,5 +81,18 @@ export default class HybridSystemLismaListener extends LismaListener {
       state.predicate = [...this.exprStack];
       this.exprStack.splice(0, this.exprStack.length);
     }
+  };
+
+  exitConstDef = (ctx: ConstDefContext) => {
+    this.constants.push({
+      name: ctx.ID().getText(),
+      expression: [...this.exprStack],
+    });
+    this.exprStack.splice(0, this.exprStack.length);
+  };
+
+  exitInitCond = (ctx: InitCondContext) => {
+    this.initials.set(ctx.ID().getText(), [...this.exprStack]);
+    this.exprStack.splice(0, this.exprStack.length);
   };
 }
