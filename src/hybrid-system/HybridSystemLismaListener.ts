@@ -1,22 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import LismaListener from '../gen/LismaListener';
 import { DiffDefContext, ExprContext, StateContext } from '../gen/LismaParser';
-
-type DiffVariable = {
-  name: string;
-  expression: string[];
-};
-
-type State = {
-  name: string;
-  predicate: string[];
-  diffVariables: DiffVariable[];
-  from: string[];
-};
+import { DiffVariable } from './types/DiffVariable';
+import { State } from './types/State';
 
 export default class HybridSystemLismaListener extends LismaListener {
   private readonly states: State[] = [];
-
   private readonly diffStack: DiffVariable[] = [];
   private readonly exprStack: string[] = [];
 
