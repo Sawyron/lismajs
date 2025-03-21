@@ -2,6 +2,7 @@ import {
   CharStream,
   CommonTokenStream,
   ErrorListener,
+  ParseTree,
   ParseTreeListener,
   ParseTreeWalker,
   Token,
@@ -19,7 +20,8 @@ type CompileConfig = {
 function walkOnText<T extends ParseTreeListener>(
   walker: T,
   source: string,
-  config: CompileConfig = {}
+  config: CompileConfig = {},
+  ruleExtractor: (parser: LismaParser) => ParseTree = parser => parser.prog()
 ) {
   const chars = new CharStream(source);
   const lexer = new LismaLexer(chars);
@@ -39,7 +41,7 @@ function walkOnText<T extends ParseTreeListener>(
     parser.addErrorListener(parserErrorListener);
   }
 
-  const tree = parser.prog();
+  const tree = ruleExtractor(parser);
   ParseTreeWalker.DEFAULT.walk(walker, tree);
 }
 

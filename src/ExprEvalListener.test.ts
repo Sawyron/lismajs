@@ -5,11 +5,17 @@ import LismaListener from './gen/LismaListener';
 
 describe('Syntax errors', () => {
   it('should find syntax errors', () => {
-    const walker = new LismaListener();
-    const parse = new LismaErrorListener<Token>();
-    walkOnText(walker, '1 ++ 2', { parserErrorListener: parse });
+    const listener = new LismaListener();
+    const errorListener = new LismaErrorListener<Token>();
+    walkOnText(
+      listener,
+      '1 >= * 4',
+      { parserErrorListener: errorListener },
+      parser => parser.expr()
+    );
 
-    const errors = parse.errors;
+    const errors = errorListener.errors;
     expect(errors.length).toBeGreaterThan(0);
+    console.log(errors);
   });
 });

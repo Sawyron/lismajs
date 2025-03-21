@@ -71,5 +71,6 @@ describe('HybridSystemLismaListener', () => {
     const errors = hs.getSemanticErrors();
 
     expect(errors.length).toBe(1);
+    console.log(errors);
   });
 });
