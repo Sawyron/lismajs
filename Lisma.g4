@@ -2,9 +2,10 @@ grammar Lisma;
 prog: topLevelStatement+ EOF;
 topLevelStatement: state | constDef;
 state:
-	'state' ID LPAREN expr RPAREN LBRACKET statement* RBRACKET 'from' ID (
-		',' ID
+	'state' ID LBRACKET statement* RBRACKET transition (
+		',' transition
 	)*;
+transition: 'from' ID (',' ID)* 'on' LPAREN expr RPAREN;
 statement: (diffDef | algDef | initCond) DELIMITER;
 diffDef: ID '\'' '=' expr;
 algDef: ID '=' expr;

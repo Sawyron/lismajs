@@ -1,8 +1,8 @@
 import { DiffVariable } from './DiffVariable';
+import { Transtion as Transition } from './Transition';
 
 export type State = {
   name: string;
-  predicate: string[];
   diffVariables: DiffVariable[];
-  from: string[];
+  transitions: Transition[];
 };

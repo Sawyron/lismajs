@@ -6,16 +6,18 @@ describe('HybridSystemLismaListener', () => {
     const hs = new HybridSystemLismaListener();
     const code = `
     const phi = 3 + tau;
-    state a(t > 2) {
+    state a {
       x' = 3 * z;
       y' = r + 4 * (h - temp);
       y(t0) = 4;
-    } from b, c
+    } from b on (1 < 2), from c, d on (3 <= 4)
     `;
     walkOnText(hs, code);
 
     const system = hs.getSystem();
     const { states } = system;
+
+    expect(hs.getSemanticErrors().length).toBe(0);
 
     expect(states.length).toBe(1);
     const state = states[0];
@@ -35,7 +37,13 @@ describe('HybridSystemLismaListener', () => {
       '+',
     ]);
 
-    expect(state.from).toStrictEqual(['b', 'c']);
+    expect(state.transitions.length).toBe(3);
+    expect(state.transitions[0].from).toBe('b');
+    expect(state.transitions[0].condition).toStrictEqual(['1', '2', '<']);
+    expect(state.transitions[1].from).toBe('c');
+    expect(state.transitions[1].condition).toStrictEqual(['3', '4', '<=']);
+    expect(state.transitions[2].from).toBe('d');
+    expect(state.transitions[2].condition).toStrictEqual(['3', '4', '<=']);
 
     const { constants } = system;
     expect(constants.length).toBe(1);
@@ -50,5 +58,18 @@ describe('HybridSystemLismaListener', () => {
     const { diffVariableNames } = system;
     expect(diffVariableNames.length).toBe(2);
     expect(diffVariableNames).toStrictEqual(['x', 'y']);
+  });
+
+  it('should find not boolean transtion expressions', () => {
+    const hs = new HybridSystemLismaListener();
+    const code = `
+    state a {
+    } from b on (1)
+    `;
+    walkOnText(hs, code);
+
+    const errors = hs.getSemanticErrors();
+
+    expect(errors.length).toBe(1);
   });
 });

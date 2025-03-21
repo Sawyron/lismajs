@@ -6,18 +6,25 @@ import {
   ExprContext,
   InitCondContext,
   StateContext,
+  TransitionContext,
 } from '../gen/LismaParser';
+import { LismaError } from '../types/LismaError';
 import { Constant } from './types/Consant';
 import { DiffVariable } from './types/DiffVariable';
 import { HybridSystem } from './types/HybridSystem';
 import { State } from './types/State';
+import { Transtion as Transition } from './types/Transition';
+import { checkExpressionType } from '../expressions';
+import { DataType } from '../expressions/DataType';
 
 export default class HybridSystemLismaListener extends LismaListener {
   private readonly states: State[] = [];
   private readonly diffStack: DiffVariable[] = [];
   private readonly exprStack: string[] = [];
+  private readonly transitionStack: Transition[] = [];
   private readonly constants: Constant[] = [];
   private readonly initials = new Map<string, string[]>();
+  private readonly errors: LismaError[] = [];
 
   public getSystem(): HybridSystem {
     const initials = new Map(this.initials);
@@ -38,22 +45,24 @@ export default class HybridSystemLismaListener extends LismaListener {
     };
   }
 
+  public getSemanticErrors(): LismaError[] {
+    return [...this.errors];
+  }
+
   enterState = (ctx: StateContext) => {
     this.states.push({
-      name: ctx.ID(0).getText(),
-      predicate: [],
+      name: ctx.ID().getText(),
       diffVariables: [],
-      from: ctx
-        .ID_list()
-        .slice(1)
-        .map(node => node.getText()),
+      transitions: [],
     });
   };
 
   exitState = (ctx: StateContext) => {
     const state = this.states.at(-1)!;
     state.diffVariables = [...this.diffStack];
+    state.transitions = [...this.transitionStack];
     this.diffStack.splice(0, this.diffStack.length);
+    this.transitionStack.splice(0, this.transitionStack.length);
   };
 
   exitDiffDef = (ctx: DiffDefContext) => {
@@ -64,22 +73,33 @@ export default class HybridSystemLismaListener extends LismaListener {
     this.exprStack.splice(0, this.exprStack.length);
   };
 
+  exitTransition = (ctx: TransitionContext) => {
+    this.transitionStack.push(
+      ...ctx.ID_list().map(id => ({
+        from: id.getText(),
+        condition: [...this.exprStack],
+      }))
+    );
+    if (checkExpressionType(this.exprStack) !== DataType.Boolean) {
+      const token = ctx.LPAREN().symbol;
+      this.errors.push({
+        message: 'Transtion expression must be of boolean type.',
+        charPosition: token.column,
+        line: token.line,
+      });
+    }
+    this.exprStack.splice(0, this.exprStack.length);
+  };
+
   exitExpr = (ctx: ExprContext) => {
     if (ctx.ID()) {
       this.exprStack.push(ctx.ID().getText());
     } else if (ctx.NUMBER()) {
       this.exprStack.push(ctx.NUMBER().getText());
     } else if (ctx._luop) {
-      const operation = ctx._luop.text;
-      this.exprStack.push(operation);
+      this.exprStack.push(ctx._luop.text);
     } else if (ctx._bop) {
-      const opearation = ctx._bop.text;
-      this.exprStack.push(opearation);
-    }
-    if (ctx.parentCtx instanceof StateContext) {
-      const state = this.states.at(-1)!;
-      state.predicate = [...this.exprStack];
-      this.exprStack.splice(0, this.exprStack.length);
+      this.exprStack.push(ctx._bop.text);
     }
   };
 
