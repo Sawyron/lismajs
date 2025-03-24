@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import LismaListener from '../gen/LismaListener';
 import {
   ConstDefContext,
@@ -18,13 +17,13 @@ import { checkExpressionType } from '../expressions';
 import { DataType } from '../expressions/DataType';
 
 export default class HybridSystemLismaListener extends LismaListener {
-  private readonly states: State[] = [];
-  private readonly diffStack: DiffVariable[] = [];
-  private readonly exprStack: string[] = [];
-  private readonly transitionStack: Transition[] = [];
-  private readonly constants: Constant[] = [];
-  private readonly initials = new Map<string, string[]>();
-  private readonly errors: LismaError[] = [];
+  private states: State[] = [];
+  private diffStack: DiffVariable[] = [];
+  private exprStack: string[] = [];
+  private transitionStack: Transition[] = [];
+  private constants: Constant[] = [];
+  private initials = new Map<string, string[]>();
+  private errors: LismaError[] = [];
 
   public getSystem(): HybridSystem {
     const initials = new Map(this.initials);
@@ -49,20 +48,14 @@ export default class HybridSystemLismaListener extends LismaListener {
     return [...this.errors];
   }
 
-  enterState = (ctx: StateContext) => {
+  exitState = (ctx: StateContext) => {
     this.states.push({
       name: ctx.ID().getText(),
-      diffVariables: [],
-      transitions: [],
+      diffVariables: [...this.diffStack],
+      transitions: [...this.transitionStack],
     });
-  };
-
-  exitState = (ctx: StateContext) => {
-    const state = this.states.at(-1)!;
-    state.diffVariables = [...this.diffStack];
-    state.transitions = [...this.transitionStack];
-    this.diffStack.splice(0, this.diffStack.length);
-    this.transitionStack.splice(0, this.transitionStack.length);
+    this.diffStack = [];
+    this.transitionStack = [];
   };
 
   exitDiffDef = (ctx: DiffDefContext) => {
@@ -70,7 +63,7 @@ export default class HybridSystemLismaListener extends LismaListener {
       name: ctx.ID().getText(),
       expression: [...this.exprStack],
     });
-    this.exprStack.splice(0, this.exprStack.length);
+    this.exprStack = [];
   };
 
   exitTransition = (ctx: TransitionContext) => {
@@ -83,12 +76,12 @@ export default class HybridSystemLismaListener extends LismaListener {
     if (checkExpressionType(this.exprStack) !== DataType.Boolean) {
       const token = ctx.LPAREN().symbol;
       this.errors.push({
-        message: 'Transtion expression must be of boolean type.',
+        message: 'Transition expression must be of boolean type.',
         charPosition: token.column,
         line: token.line,
       });
     }
-    this.exprStack.splice(0, this.exprStack.length);
+    this.exprStack = [];
   };
 
   exitExpr = (ctx: ExprContext) => {
@@ -108,11 +101,11 @@ export default class HybridSystemLismaListener extends LismaListener {
       name: ctx.ID().getText(),
       expression: [...this.exprStack],
     });
-    this.exprStack.splice(0, this.exprStack.length);
+    this.exprStack = [];
   };
 
   exitInitCond = (ctx: InitCondContext) => {
     this.initials.set(ctx.ID().getText(), [...this.exprStack]);
-    this.exprStack.splice(0, this.exprStack.length);
+    this.exprStack = [];
   };
 }
