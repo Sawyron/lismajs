@@ -9,7 +9,7 @@ transition: 'from' ID (',' ID)* 'on' LPAREN expr RPAREN;
 statement: (diffDef | algDef | initCond) DELIMITER;
 diffDef: ID '\'' '=' expr;
 algDef: ID '=' expr;
-initCond: ID '(' 't0' ')' '=' expr;
+initCond: ID '(' 't0' ')' eq = '=' expr;
 constDef: 'const' ID '=' expr DELIMITER;
 expr:
 	LPAREN expr RPAREN

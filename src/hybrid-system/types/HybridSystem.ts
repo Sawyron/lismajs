@@ -1,9 +1,10 @@
-import { Constant } from './Consant';
+import { Constant } from './Constant';
 import { State } from './State';
 
 export type HybridSystem = {
   diffVariableNames: string[];
   states: State[];
   constants: Constant[];
-  initials: Map<string, string[]>;
+  table: Map<string, number>;
+  activeState?: State;
 };

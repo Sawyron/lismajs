@@ -1,4 +1,6 @@
-export type Transtion = {
+import { BooleanExpression } from '../../expressions/boolean/BooleanExpression';
+
+export type Transition = {
   from: string;
-  condition: string[];
+  predicate: BooleanExpression;
 };

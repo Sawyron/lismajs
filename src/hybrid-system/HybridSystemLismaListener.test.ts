@@ -1,10 +1,14 @@
 import { walkOnText } from '..';
+import { BinaryBooleanExpression } from '../expressions/boolean/BinaryBooleanExpression';
+import { BinaryFloatExpression } from '../expressions/float/FloatBinaryExpression';
+import { FloatExpression } from '../expressions/float/FloatExpression';
 import HybridSystemLismaListener from './HybridSystemLismaListener';
 
 describe('HybridSystemLismaListener', () => {
   it('should work', () => {
     const hs = new HybridSystemLismaListener();
     const code = `
+    const tau = 0.1;
     const phi = 3 + tau;
     state a {
       x' = 3 * z;
@@ -25,42 +29,38 @@ describe('HybridSystemLismaListener', () => {
 
     expect(state.diffVariables.length).toBe(2);
     expect(state.diffVariables[0].name).toBe('x');
-    expect(state.diffVariables[0].expression).toStrictEqual(['3', 'z', '*']);
+    expect(String(state.diffVariables[0].expression)).toStrictEqual('3 z *');
     expect(state.diffVariables[1].name).toBe('y');
-    expect(state.diffVariables[1].expression).toStrictEqual([
-      'r',
-      '4',
-      'h',
-      'temp',
-      '-',
-      '*',
-      '+',
-    ]);
+    expect(String(state.diffVariables[1].expression)).toStrictEqual(
+      'r 4 h temp - * +'
+    );
 
     expect(state.transitions.length).toBe(3);
     expect(state.transitions[0].from).toBe('b');
-    expect(state.transitions[0].condition).toStrictEqual(['1', '2', '<']);
+    expect(String(state.transitions[0].predicate)).toStrictEqual('1 2 <');
     expect(state.transitions[1].from).toBe('c');
-    expect(state.transitions[1].condition).toStrictEqual(['3', '4', '<=']);
+    expect(String(state.transitions[1].predicate)).toStrictEqual('3 4 <=');
     expect(state.transitions[2].from).toBe('d');
-    expect(state.transitions[2].condition).toStrictEqual(['3', '4', '<=']);
+    expect(String(state.transitions[2].predicate)).toStrictEqual('3 4 <=');
 
     const { constants } = system;
-    expect(constants.length).toBe(1);
-    expect(constants[0].name).toBe('phi');
-    expect(constants[0].expression).toStrictEqual(['3', 'tau', '+']);
+    expect(constants.length).toBe(2);
+    expect(constants[0].name).toBe('tau');
+    expect(constants[1].name).toBe('phi');
+    expect(String(constants[0].expression)).toStrictEqual('0.1');
+    expect(String(constants[1].expression)).toStrictEqual('3 tau +');
 
-    const { initials } = system;
-    expect(initials.size).toBe(2);
-    expect(initials.get('x')).toStrictEqual(['0']);
-    expect(initials.get('y')).toStrictEqual(['4']);
+    const { table } = system;
+    expect(table.size).toBe(5);
+    expect(table.get('x')).toStrictEqual(0);
+    expect(table.get('y')).toStrictEqual(4);
 
     const { diffVariableNames } = system;
     expect(diffVariableNames.length).toBe(2);
     expect(diffVariableNames).toStrictEqual(['x', 'y']);
   });
 
-  it('should find not boolean transtion expressions', () => {
+  it('should find not boolean transition expressions', () => {
     const hs = new HybridSystemLismaListener();
     const code = `
     state a {
@@ -72,5 +72,71 @@ describe('HybridSystemLismaListener', () => {
 
     expect(errors.length).toBe(1);
     console.log(errors);
+  });
+
+  it('should parse predicate expr', () => {
+    const hs = new HybridSystemLismaListener();
+    const code = `
+    state a {
+    } from b on (1 >= 2)
+    `;
+
+    walkOnText(hs, code);
+
+    const system = hs.getSystem();
+    const state = system.states[0];
+    const transition = state.transitions[0];
+    const { predicate } = transition;
+    expect(predicate).toBeInstanceOf(BinaryBooleanExpression);
+    expect(String(predicate)).toBe('1 2 >=');
+    expect((predicate as BinaryBooleanExpression).evaluate()).toBe(false);
+  });
+
+  it('should parse simple float expr', () => {
+    const hs = new HybridSystemLismaListener();
+    const code = `
+    state a {
+      x' = 3 + 4;
+    } from b on (1 >= 2)
+    `;
+
+    walkOnText(hs, code);
+
+    const system = hs.getSystem();
+    const x = system.states[0].diffVariables[0];
+    expect(x.expression).toBeInstanceOf(BinaryFloatExpression);
+    expect(String(x.expression)).toBe('3 4 +');
+    expect((x.expression as FloatExpression).evaluate()).toBe(7);
+  });
+
+  it('should evaluate ids in expressions', () => {
+    const hs = new HybridSystemLismaListener();
+    const code = `
+    const phi = 3;
+    state a {
+      x' = 3 + phi;
+    } from b on (1 >= 2)
+    `;
+
+    walkOnText(hs, code);
+
+    const system = hs.getSystem();
+    const x = system.states[0].diffVariables[0].expression as FloatExpression;
+    expect(x.evaluate()).toBe(6);
+  });
+
+  it('should evaluate initial conditions', () => {
+    const hs = new HybridSystemLismaListener();
+    const code = `
+    state a {
+      x' = 4;
+      x(t0) = 5;
+    } from b on (1 >= 2)
+    `;
+
+    walkOnText(hs, code);
+
+    const system = hs.getSystem();
+    expect(system.table.get('x')).toBe(5);
   });
 });
