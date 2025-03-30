@@ -1,3 +1,4 @@
+import { AssignExpression } from '../expressions/assign/AssignExpression';
 import {
   DerivativeSystem,
   IntegrationStep,
@@ -5,6 +6,7 @@ import {
 } from './integration/Integrator';
 import { HybridSystem } from './types/HybridSystem';
 import { State } from './types/State';
+import { Transition } from './types/Transition';
 
 const evaluateHybridSystem = (
   system: HybridSystem,
@@ -19,13 +21,35 @@ const evaluateHybridSystem = (
     system.states.map(state => [state.name, state])
   );
   const steps: IntegrationStep[] = [];
+  const getCurrentTransitions = (): [string, Transition][] => {
+    return system.states
+      .filter(s => s.name !== system.activeState?.name)
+      .flatMap(state => {
+        const transitions = state.transitions.filter(
+          t => t.from === system.activeState?.name
+        );
+        return transitions.map<[string, Transition]>(t => [state.name, t]);
+      });
+  };
+  let transitions = getCurrentTransitions();
   let step = { x: 0, values: values };
   while (step.x <= end) {
     steps.push(step);
-    const state = system.activeState!;
-    for (const transition of state.transitions) {
+    for (const [stateName, transition] of transitions) {
       if (transition.predicate.evaluate()) {
-        system.activeState = stateFromName.get(transition.from);
+        const state = stateFromName.get(stateName);
+        system.activeState = state;
+        transitions = getCurrentTransitions();
+        if (state) {
+          for (const action of state.onEnterExpressions) {
+            if (action instanceof AssignExpression) {
+              action.execute();
+            }
+          }
+          system.diffVariableNames.forEach((variable, index) => {
+            step.values[index] = system.table.get(variable)!;
+          });
+        }
         break;
       }
     }

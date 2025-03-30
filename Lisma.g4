@@ -1,10 +1,12 @@
 grammar Lisma;
 prog: topLevelStatement+ EOF;
-topLevelStatement: state | constDef;
+topLevelStatement: constDef | state;
 state:
-	'state' ID LBRACKET statement* RBRACKET transition (
-		',' transition
-	)*;
+	'state' ID LBRACKET statePart* RBRACKET stateTransitions? DELIMITER;
+stateTransitions: transition ( ',' transition)*;
+statePart:
+	part = 'body' LBRACKET statement* RBRACKET
+	| part = 'onEnter' LBRACKET algDef DELIMITER RBRACKET;
 transition: 'from' ID (',' ID)* 'on' LPAREN expr RPAREN;
 statement: (diffDef | algDef | initCond) DELIMITER;
 diffDef: ID '\'' '=' expr;

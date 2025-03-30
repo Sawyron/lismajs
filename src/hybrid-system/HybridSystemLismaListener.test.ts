@@ -1,4 +1,5 @@
 import { walkOnText } from '..';
+import { AssignExpression } from '../expressions/assign/AssignExpression';
 import { BinaryBooleanExpression } from '../expressions/boolean/BinaryBooleanExpression';
 import { BinaryFloatExpression } from '../expressions/float/FloatBinaryExpression';
 import { FloatExpression } from '../expressions/float/FloatExpression';
@@ -11,10 +12,12 @@ describe('HybridSystemLismaListener', () => {
     const tau = 0.1;
     const phi = 3 + tau;
     state a {
-      x' = 3 * z;
-      y' = r + 4 * (h - temp);
-      y(t0) = 4;
-    } from b on (1 < 2), from c, d on (3 <= 4)
+      body {
+          x' = 3 * z;
+          y' = r + 4 * (h - temp);
+          y(t0) = 4;
+      }
+    } from b on (1 < 2), from c, d on (3 <= 4);
     `;
     walkOnText(hs, code);
 
@@ -64,7 +67,7 @@ describe('HybridSystemLismaListener', () => {
     const hs = new HybridSystemLismaListener();
     const code = `
     state a {
-    } from b on (1)
+    } from b on (1);
     `;
     walkOnText(hs, code);
 
@@ -78,7 +81,7 @@ describe('HybridSystemLismaListener', () => {
     const hs = new HybridSystemLismaListener();
     const code = `
     state a {
-    } from b on (1 >= 2)
+    } from b on (1 >= 2);
     `;
 
     walkOnText(hs, code);
@@ -96,8 +99,10 @@ describe('HybridSystemLismaListener', () => {
     const hs = new HybridSystemLismaListener();
     const code = `
     state a {
-      x' = 3 + 4;
-    } from b on (1 >= 2)
+      body {
+          x' = 3 + 4;
+      }
+    } from b on (1 >= 2);
     `;
 
     walkOnText(hs, code);
@@ -114,8 +119,10 @@ describe('HybridSystemLismaListener', () => {
     const code = `
     const phi = 3;
     state a {
-      x' = 3 + phi;
-    } from b on (1 >= 2)
+      body {
+          x' = 3 + phi;
+      }
+    } from b on (1 >= 2);
     `;
 
     walkOnText(hs, code);
@@ -129,14 +136,82 @@ describe('HybridSystemLismaListener', () => {
     const hs = new HybridSystemLismaListener();
     const code = `
     state a {
-      x' = 4;
-      x(t0) = 5;
-    } from b on (1 >= 2)
+      body {
+          x' = 4;
+          x(t0) = 5;
+      }
+    } from b on (1 >= 2);
     `;
 
     walkOnText(hs, code);
 
     const system = hs.getSystem();
     expect(system.table.get('x')).toBe(5);
+  });
+
+  it('should evaluate on exit expressions', () => {
+    const hs = new HybridSystemLismaListener();
+    const code = `
+    state a {
+      body {
+          x' = 4;
+      }
+      onEnter {
+          x = 10;
+      }
+    } from b on (1 >= 2);
+    `;
+
+    walkOnText(hs, code);
+
+    const system = hs.getSystem();
+    expect(system.states[0].onEnterExpressions.length).toBe(1);
+    const onEnter = system.states[0].onEnterExpressions[0];
+    expect(onEnter).toBeInstanceOf(AssignExpression);
+    (onEnter as AssignExpression).execute();
+    expect(system.table.get('x')).toBe(10);
+  });
+
+  it('should parse ball system', () => {
+    const hs = new HybridSystemLismaListener();
+    const code = `
+        const g = 9.81;
+        state init {
+          body {
+              v' = -g;
+              y' = v;
+              y(t0) = 10;
+          }
+        };
+    
+        state vzlet {
+            body {
+                v' = -g;
+                y' = v;
+            }
+            onEnter {
+                v = -v;
+            }
+        } from init, padenie on (y < 0);
+    
+        state padenie {
+            body {
+              v' = -g;
+              y' = v;
+            }
+        } from init, vzlet on (v < 0);
+        `;
+    walkOnText(hs, code);
+
+    const system = hs.getSystem();
+    expect(system.states.length).toBe(3);
+
+    const initState = system.states[0];
+    expect(initState.name).toBe('init');
+    expect(initState.transitions.length).toBe(0);
+
+    const upState = system.states[1];
+    expect(upState.name).toBe('vzlet');
+    expect(upState.transitions.length).toBe(2);
   });
 });

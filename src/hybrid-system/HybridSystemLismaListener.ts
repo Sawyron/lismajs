@@ -1,15 +1,17 @@
 import LismaListener from '../gen/LismaListener';
 import {
+  AlgDefContext,
   ConstDefContext,
   DiffDefContext,
   ExprContext,
   InitCondContext,
   StateContext,
+  StatePartContext,
   TransitionContext,
 } from '../gen/LismaParser';
 import { LismaError } from '../types/LismaError';
 import { Constant } from './types/Constant';
-import { DiffVariable } from './types/DiffVariable';
+import { DiffVariable as VariableDefinition } from './types/DiffVariable';
 import { HybridSystem } from './types/HybridSystem';
 import { State } from './types/State';
 import { Transition } from './types/Transition';
@@ -22,11 +24,13 @@ import { BinaryBooleanExpression } from '../expressions/boolean/BinaryBooleanExp
 import { BinaryFloatExpression } from '../expressions/float/FloatBinaryExpression';
 import { BooleanExpression } from '../expressions/boolean/BooleanExpression';
 import { FloatVariableExpression } from '../expressions/float/FloatVariableExpression';
+import { AssignExpression } from '../expressions/assign/AssignExpression';
+import { FloatUnaryExpression } from '../expressions/float/FloatUnaryExpression';
 
 export default class HybridSystemLismaListener extends LismaListener {
   private states: State[] = [];
-  private diffStack: DiffVariable[] = [];
-  //private exprStack: string[] = [];
+  private diffStack: VariableDefinition[] = [];
+  private algStack: VariableDefinition[] = [];
   private expressionStack: Expression[] = [];
   private transitionStack: Transition[] = [];
   private constants: Constant[] = [];
@@ -65,14 +69,37 @@ export default class HybridSystemLismaListener extends LismaListener {
     return [...this.errors];
   }
 
-  exitState = (ctx: StateContext) => {
+  enterState = (ctx: StateContext) => {
     this.states.push({
       name: ctx.ID().getText(),
-      diffVariables: [...this.diffStack],
-      transitions: [...this.transitionStack],
+      diffVariables: [],
+      transitions: [],
+      onEnterExpressions: [],
     });
-    this.diffStack = [];
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  exitState = (ctx: StateContext) => {
+    const state = this.states.at(-1)!;
+    state.transitions = [...this.transitionStack];
     this.transitionStack = [];
+  };
+
+  exitStatePart = (ctx: StatePartContext) => {
+    if (ctx._part.text === 'body') {
+      const state = this.states.at(-1)!;
+      state.diffVariables = [...this.diffStack];
+      this.diffStack = [];
+    } else if (ctx._part.text === 'onEnter') {
+      const state = this.states.at(-1)!;
+      state.onEnterExpressions = [
+        ...this.algStack.map(
+          def =>
+            new AssignExpression(def.name, def.expression, this.variableTable)
+        ),
+      ];
+      this.algStack = [];
+    }
   };
 
   exitDiffDef = (ctx: DiffDefContext) => {
@@ -87,6 +114,23 @@ export default class HybridSystemLismaListener extends LismaListener {
       return;
     }
     this.diffStack.push({
+      name: ctx.ID().getText(),
+      expression: expression,
+    });
+  };
+
+  exitAlgDef = (ctx: AlgDefContext) => {
+    const expression = this.expressionStack.pop();
+    if (!(expression instanceof FloatExpression)) {
+      const token = ctx.ID().symbol;
+      this.errors.push({
+        charPosition: token.start,
+        line: token.line,
+        message: 'Alg variable should be defined by float type expression',
+      });
+      return;
+    }
+    this.algStack.push({
       name: ctx.ID().getText(),
       expression: expression,
     });
@@ -121,7 +165,22 @@ export default class HybridSystemLismaListener extends LismaListener {
         new FloatConstExpression(Number(ctx.NUMBER().getText()))
       );
     } else if (ctx._luop) {
-      //this.exprStack.push(ctx._luop.text);
+      const operation = ctx._luop.text;
+      if (FloatUnaryExpression.operations.has(operation)) {
+        const expression = this.expressionStack.pop()!;
+        if (!(expression instanceof FloatExpression)) {
+          return;
+        }
+        this.expressionStack.push(
+          new FloatUnaryExpression(expression, operation)
+        );
+      } else {
+        this.errors.push({
+          charPosition: ctx._luop.start,
+          line: ctx._luop.line,
+          message: 'Can not apply unary operation',
+        });
+      }
     } else if (ctx._bop) {
       const right = this.expressionStack.pop()!;
       const left = this.expressionStack.pop()!;
@@ -130,8 +189,7 @@ export default class HybridSystemLismaListener extends LismaListener {
         this.expressionStack.push(
           new BinaryBooleanExpression(left, right, operation)
         );
-      }
-      if (BinaryFloatExpression.operations.has(operation)) {
+      } else if (BinaryFloatExpression.operations.has(operation)) {
         this.expressionStack.push(
           new BinaryFloatExpression(left, right, operation)
         );
