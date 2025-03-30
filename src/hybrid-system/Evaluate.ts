@@ -6,11 +6,11 @@ import {
 import { HybridSystem } from './types/HybridSystem';
 import { State } from './types/State';
 
-export function evaluateHybridSystem(
+const evaluateHybridSystem = (
   system: HybridSystem,
   integrator: Integrator,
   end: number
-): IntegrationStep[] {
+): IntegrationStep[] => {
   const ds = mapHsToDs(system);
   const values = system.diffVariableNames.map(
     value => system.table.get(value)!
@@ -32,9 +32,9 @@ export function evaluateHybridSystem(
     step = integrator.makeStep(ds, step);
   }
   return steps;
-}
+};
 
-function mapHsToDs(hs: HybridSystem): DerivativeSystem {
+const mapHsToDs = (hs: HybridSystem): DerivativeSystem => {
   return (x, y) => {
     const state = hs.activeState;
     if (state === undefined) {
@@ -47,4 +47,6 @@ function mapHsToDs(hs: HybridSystem): DerivativeSystem {
     const values = state.diffVariables.map(d => d.expression.evaluate());
     return [...values];
   };
-}
+};
+
+export { evaluateHybridSystem };
