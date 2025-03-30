@@ -4,6 +4,7 @@ import {
   Integrator,
 } from './integration/Integrator';
 import { HybridSystem } from './types/HybridSystem';
+import { State } from './types/State';
 
 export function evaluateHybridSystem(
   system: HybridSystem,
@@ -14,6 +15,9 @@ export function evaluateHybridSystem(
   const values = system.diffVariableNames.map(
     value => system.table.get(value)!
   );
+  const stateFromName = new Map<string, State>(
+    system.states.map(state => [state.name, state])
+  );
   const steps: IntegrationStep[] = [];
   let step = { x: 0, values: values };
   while (step.x <= end) {
@@ -21,9 +25,7 @@ export function evaluateHybridSystem(
     const state = system.activeState!;
     for (const transition of state.transitions) {
       if (transition.predicate.evaluate()) {
-        system.activeState = system.states.find(
-          s => s.name === transition.from
-        );
+        system.activeState = stateFromName.get(transition.from);
         break;
       }
     }
