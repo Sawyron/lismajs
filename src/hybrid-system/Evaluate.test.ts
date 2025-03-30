@@ -24,28 +24,6 @@ describe('Evaluate', () => {
     console.log(target);
   });
 
-  it('should evaluate ball s', async () => {
-    const hs = new HybridSystemLismaListener();
-    const code = `
-    const g = 9.81;
-    state init {
-      body {
-          v' = -g;
-          y' = v;
-          y(t0) = 10;
-      }
-    };
-    `;
-    walkOnText(hs, code);
-
-    const system = hs.getSystem();
-    const result = evaluateHybridSystem(system, new EulerIntegrator(0.001), 2);
-    console.log(result);
-
-    await fs.mkdir('./out', { recursive: true });
-    await fs.writeFile('./out/ball.json', JSON.stringify(result));
-  });
-
   it('should evaluate ball', async () => {
     const hs = new HybridSystemLismaListener();
     const code = `
