@@ -4,6 +4,7 @@ import {
   IntegrationStep,
   Integrator,
 } from './integration/Integrator';
+import { DiffVariable } from './types/DiffVariable';
 import { HybridSystem } from './types/HybridSystem';
 import { State } from './types/State';
 import { Transition } from './types/Transition';
@@ -55,8 +56,9 @@ const getTransitionsFromState = (
     );
 
 const mapHsToDs = (hs: HybridSystem): DerivativeSystem => {
-  const sharedMap = new Map(
-    hs.sharedState.diffVariables.map(diff => [diff.name, diff])
+  const sharedDiffMapMap = stateToDiffMap(hs.sharedState);
+  const statesDiffMaps = new Map(
+    hs.states.map(state => [state.name, stateToDiffMap(state)])
   );
   return (x, y) => {
     const { activeState } = hs;
@@ -64,15 +66,16 @@ const mapHsToDs = (hs: HybridSystem): DerivativeSystem => {
       hs.table.set(name, y[index]);
     });
     hs.table.set('time', x);
-    const activeStateDiffMap = new Map(
-      activeState.diffVariables.map(diff => [diff.name, diff])
+    const activeStateDiffMap = statesDiffMaps.get(activeState.name)!;
+    const diffVariables = hs.diffVariableNames.map(
+      diffName =>
+        activeStateDiffMap.get(diffName) ?? sharedDiffMapMap.get(diffName)!
     );
-    const diffVariables = hs.diffVariableNames.map(diffName => {
-      const state = activeStateDiffMap.get(diffName);
-      return state ? state : sharedMap.get(diffName)!;
-    });
     return diffVariables.map(d => d.expression.evaluate());
   };
 };
+
+const stateToDiffMap = (state: State): Map<string, DiffVariable> =>
+  new Map(state.diffVariables.map(diff => [diff.name, diff]));
 
 export { evaluateHybridSystem };
