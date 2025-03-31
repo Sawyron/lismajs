@@ -11,13 +11,15 @@ describe('HybridSystemLismaListener', () => {
     const code = `
     const tau = 0.1;
     const phi = 3 + tau;
+    state shared {
+    };
     state a {
       body {
           x' = 3 * z;
           y' = r + 4 * (h - temp);
-          y(t0) = 4;
       }
     } from b on (1 < 2), from c, d on (3 <= 4);
+    y(t0) = 4;
     `;
     walkOnText(hs, code);
 
@@ -26,8 +28,8 @@ describe('HybridSystemLismaListener', () => {
 
     expect(hs.getSemanticErrors().length).toBe(0);
 
-    expect(states.length).toBe(1);
-    const state = states[0];
+    expect(states.length).toBe(2);
+    const state = states[1];
     expect(state.name).toBe('a');
 
     expect(state.diffVariables.length).toBe(2);
@@ -138,9 +140,9 @@ describe('HybridSystemLismaListener', () => {
     state a {
       body {
           x' = 4;
-          x(t0) = 5;
       }
     } from b on (1 >= 2);
+    x(t0) = 5;
     `;
 
     walkOnText(hs, code);
@@ -176,11 +178,12 @@ describe('HybridSystemLismaListener', () => {
     const hs = new HybridSystemLismaListener();
     const code = `
         const g = 9.81;
+        y(t0) = 10;
+
         state init {
           body {
               v' = -g;
               y' = v;
-              y(t0) = 10;
           }
         };
     

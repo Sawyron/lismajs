@@ -8,7 +8,7 @@ describe('Evaluate', () => {
   it('should work', () => {
     const hs = new HybridSystemLismaListener();
     const code = `
-    state a {
+    state shared {
       body {
           x' = 2 * time;
           y' = 3 * x;
@@ -28,30 +28,27 @@ describe('Evaluate', () => {
     const hs = new HybridSystemLismaListener();
     const code = `
     const g = 9.81;
-    state init {
+    y(t0) = 10;
+
+    state shared {
       body {
           v' = -g;
           y' = v;
-          y(t0) = 10;
       }
     };
 
     state vzlet {
-        body {
-            v' = -g;
-            y' = v;
-        }
         onEnter {
             v = -v;
         }
-    } from init, padenie on (y < 0);
+    } from shared, padenie on (y < 0);
 
     state padenie {
         body {
             v' = -g;
             y' = v;
         }
-    } from init, vzlet on (v < 0);
+    } from shared, vzlet on (v < 0);
     `;
     walkOnText(hs, code);
 

@@ -6,5 +6,6 @@ export type HybridSystem = {
   states: State[];
   constants: Constant[];
   table: Map<string, number>;
-  activeState?: State;
+  sharedState: State;
+  activeState: State;
 };

@@ -15,7 +15,7 @@ const evaluateHybridSystem = (
 ): IntegrationStep[] => {
   const ds = mapHsToDs(system);
   const steps: IntegrationStep[] = [];
-  let transitions = getTransitionsToState(system.activeState!, system);
+  let transitions = getTransitionsFromState(system.activeState, system);
   let step = {
     x: 0,
     values: system.diffVariableNames.map(value => system.table.get(value)!),
@@ -25,7 +25,7 @@ const evaluateHybridSystem = (
     for (const [state, transition] of transitions) {
       if (transition.predicate.evaluate()) {
         system.activeState = state;
-        transitions = getTransitionsToState(state, system);
+        transitions = getTransitionsFromState(state, system);
         for (const action of state.onEnterExpressions) {
           if (action instanceof AssignExpression) {
             action.execute();
@@ -42,29 +42,36 @@ const evaluateHybridSystem = (
   return steps;
 };
 
-const getTransitionsToState = (
-  state: State,
+const getTransitionsFromState = (
+  targetState: State,
   hs: HybridSystem
 ): [State, Transition][] =>
   hs.states
-    .filter(s => s.name !== state.name)
+    .filter(s => s.name !== targetState.name)
     .flatMap(state =>
       state.transitions
-        .filter(t => t.from === state.name)
+        .filter(t => t.from === targetState.name)
         .map<[State, Transition]>(t => [state, t])
     );
 
 const mapHsToDs = (hs: HybridSystem): DerivativeSystem => {
+  const sharedMap = new Map(
+    hs.sharedState.diffVariables.map(diff => [diff.name, diff])
+  );
   return (x, y) => {
-    const state = hs.activeState;
-    if (state === undefined) {
-      throw Error();
-    }
+    const { activeState } = hs;
     hs.diffVariableNames.forEach((name, index) => {
       hs.table.set(name, y[index]);
     });
     hs.table.set('time', x);
-    return state.diffVariables.map(d => d.expression.evaluate());
+    const activeStateDiffMap = new Map(
+      activeState.diffVariables.map(diff => [diff.name, diff])
+    );
+    const diffVariables = hs.diffVariableNames.map(diffName => {
+      const state = activeStateDiffMap.get(diffName);
+      return state ? state : sharedMap.get(diffName)!;
+    });
+    return diffVariables.map(d => d.expression.evaluate());
   };
 };
 
