@@ -1,17 +1,19 @@
 {
-  "name": "antlr4",
+  "name": "lismajs",
   "version": "1.0.0",
-  "main": "index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "test": "jest",
     "generate": "rimraf ./src/gen && antlr4 -Dlanguage=TypeScript -o src/gen Lisma.g4",
+    "build": "tsc",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "prepare": "npm run build",
     "prepublishOnly": "npm run generate"
   },
   "type": "module",
   "keywords": [],
-  "author": "",
+  "author": "Viacheslav Shpak",
   "license": "ISC",
   "description": "",
   "dependencies": {

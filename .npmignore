@@ -4,3 +4,6 @@ node_modules
 .prettierrc
 *.config.{js,mjs,cjs,ts}
 *.test.{js,mjs,cjs,ts}
+src
+out
+.vscode
