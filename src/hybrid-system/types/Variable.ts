@@ -1,6 +1,6 @@
 import { FloatExpression } from '../../expressions/float/FloatExpression';
 
-export type DiffVariable = {
+export type Variable = {
   name: string;
   expression: FloatExpression;
 };

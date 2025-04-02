@@ -1,4 +1,5 @@
-import { IntegrationStep, Integrator } from './Integrator';
+import { Integrator } from './types/Integrator';
+import { IntegrationStep } from './types/IntegrationStep';
 
 export default class EulerIntegrator implements Integrator {
   constructor(private readonly h: number) {}

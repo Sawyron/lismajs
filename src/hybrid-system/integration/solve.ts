@@ -1,16 +1,6 @@
-export type IntegrationStep = {
-  x: number;
-  values: number[];
-};
-
-export type DerivativeSystem = (x: number, y: number[]) => number[];
-
-export interface Integrator {
-  makeStep: (
-    system: DerivativeSystem,
-    previousStep: IntegrationStep
-  ) => IntegrationStep;
-}
+import { DerivativeSystem } from './types/DerivativeSystem';
+import { IntegrationStep } from './types/IntegrationStep';
+import { Integrator } from './types/Integrator';
 
 export function solve(
   system: DerivativeSystem,

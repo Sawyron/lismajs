@@ -1,7 +1,7 @@
-import { walkOnText } from '..';
+import { walkOnText } from '../..';
 import { evaluateHybridSystem } from './Evaluate';
-import HybridSystemLismaListener from './HybridSystemLismaListener';
-import EulerIntegrator from './integration/EulerIntegrator';
+import HybridSystemLismaListener from '../HybridSystemLismaListener';
+import EulerIntegrator from '../integration/EulerIntegrator';
 import fs from 'fs/promises';
 
 describe('Evaluate', () => {
@@ -18,7 +18,12 @@ describe('Evaluate', () => {
     walkOnText(hs, code);
 
     const system = hs.getSystem();
-    const result = evaluateHybridSystem(system, new EulerIntegrator(0.001), 1);
+    const result = evaluateHybridSystem(
+      system,
+      new EulerIntegrator(0.001),
+      0,
+      1
+    );
     console.log(result);
     const target = result.find(res => res.x >= 0.5);
     console.log(target);
@@ -53,7 +58,12 @@ describe('Evaluate', () => {
     walkOnText(hs, code);
 
     const system = hs.getSystem();
-    const result = evaluateHybridSystem(system, new EulerIntegrator(0.001), 10);
+    const result = evaluateHybridSystem(
+      system,
+      new EulerIntegrator(0.001),
+      0,
+      10
+    );
 
     await fs.mkdir('./out', { recursive: true });
     await fs.writeFile('./out/ball.json', JSON.stringify(result));

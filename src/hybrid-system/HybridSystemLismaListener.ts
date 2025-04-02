@@ -11,7 +11,7 @@ import {
 } from '../gen/LismaParser';
 import { LismaError } from '../types/LismaError';
 import { Constant } from './types/Constant';
-import { DiffVariable as VariableDefinition } from './types/DiffVariable';
+import { Variable } from './types/Variable';
 import { HybridSystem } from './types/HybridSystem';
 import { State } from './types/State';
 import { Transition } from './types/Transition';
@@ -29,8 +29,8 @@ import { FloatUnaryExpression } from '../expressions/float/FloatUnaryExpression'
 
 export default class HybridSystemLismaListener extends LismaListener {
   private states: State[] = [];
-  private diffStack: VariableDefinition[] = [];
-  private algStack: VariableDefinition[] = [];
+  private diffStack: Variable[] = [];
+  private algStack: Variable[] = [];
   private expressionStack: Expression[] = [];
   private transitionStack: Transition[] = [];
   private constants: Constant[] = [];
@@ -66,6 +66,9 @@ export default class HybridSystemLismaListener extends LismaListener {
       diffVariableNames: [
         ...new Set(this.states.flatMap(s => s.diffVariables).map(d => d.name)),
       ],
+      algVariableNames: [
+        ...new Set(this.states.flatMap(s => s.algVariables).map(d => d.name)),
+      ],
       states: [...this.states],
       constants: [...this.constants],
       table: this.variableTable,
@@ -82,6 +85,7 @@ export default class HybridSystemLismaListener extends LismaListener {
     this.states.push({
       name: ctx.ID().getText(),
       diffVariables: [],
+      algVariables: [],
       transitions: [],
       onEnterExpressions: [],
     });
@@ -98,7 +102,9 @@ export default class HybridSystemLismaListener extends LismaListener {
     if (ctx._part.text === 'body') {
       const state = this.states.at(-1)!;
       state.diffVariables = [...this.diffStack];
+      state.algVariables = [...this.algStack];
       this.diffStack = [];
+      this.algStack = [];
     } else if (ctx._part.text === 'onEnter') {
       const state = this.states.at(-1)!;
       state.onEnterExpressions = [

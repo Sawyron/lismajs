@@ -1,14 +1,15 @@
 {
   "name": "lismajs",
   "version": "1.0.0",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "test": "jest",
-    "generate": "rimraf ./src/gen && antlr4 -Dlanguage=TypeScript -o src/gen Lisma.g4",
+    "generate": "rimraf ./src/gen && antlr4 -Dlanguage=TypeScript -o src/gen -visitor Lisma.g4",
     "build": "tsc",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "prepare": "npm run build",
+    "prepack": "npm run build",
     "prepublishOnly": "npm run generate"
   },
   "type": "module",

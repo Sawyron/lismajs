@@ -17,6 +17,7 @@ describe('HybridSystemLismaListener', () => {
       body {
           x' = 3 * z;
           y' = r + 4 * (h - temp);
+          z = 3 * time;
       }
     } from b on (1 < 2), from c, d on (3 <= 4);
     y(t0) = 4;
@@ -48,6 +49,9 @@ describe('HybridSystemLismaListener', () => {
     expect(state.transitions[2].from).toBe('d');
     expect(String(state.transitions[2].predicate)).toStrictEqual('3 4 <=');
 
+    expect(state.algVariables.length).toBe(1);
+    expect(String(state.algVariables[0].expression)).toBe('3 time *');
+
     const { constants } = system;
     expect(constants.length).toBe(2);
     expect(constants[0].name).toBe('tau');
@@ -63,6 +67,10 @@ describe('HybridSystemLismaListener', () => {
     const { diffVariableNames } = system;
     expect(diffVariableNames.length).toBe(2);
     expect(diffVariableNames).toStrictEqual(['x', 'y']);
+
+    const { algVariableNames } = system;
+    expect(algVariableNames.length).toBe(1);
+    expect(algVariableNames).toStrictEqual(['z']);
   });
 
   it('should find not boolean transition expressions', () => {

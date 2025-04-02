@@ -1,5 +1,6 @@
 import EulerIntegrator from './EulerIntegrator';
-import { DerivativeSystem, solve } from './Integrator';
+import { DerivativeSystem } from './types/DerivativeSystem';
+import { solve } from './solve';
 
 describe('EulerIntegrator', () => {
   it('should work', () => {
