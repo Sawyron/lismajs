@@ -1,14 +1,15 @@
-import RungeKutta2Integrator from './RungeKutta2Integrator';
+import AdaptiveRungeKutta2Integrator from './AdaptiveRungeKutta2Integrator';
 import { DerivativeSystem } from './types/DerivativeSystem';
 import { solve } from './solve';
 
-describe('RungeKutta2Integrator', () => {
+describe('AdaptiveRungeKutta2Integrator', () => {
   it('should work', () => {
     const system: DerivativeSystem = (x, [y]) => {
       return [y];
     };
+    const tol = 1e-3;
     const h = 0.00001;
-    const integrator = new RungeKutta2Integrator(h);
+    const integrator = new AdaptiveRungeKutta2Integrator(h, tol);
     const end = 5;
 
     const values = [1];
