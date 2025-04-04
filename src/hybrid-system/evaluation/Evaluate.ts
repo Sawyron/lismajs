@@ -16,8 +16,7 @@ const evaluateHybridSystem = (
   end: number
 ): EvaluationStep[] => {
   const ds = mapHsToDs(hybridSystem);
-  const eqs = mapHsToEs(hybridSystem);
-  const merge = createMerge(hybridSystem);
+  const eqs = mapHsToEqs(hybridSystem);
   const evaluationSteps: EvaluationStep[] = [];
   const integrationSteps: IntegrationStep[] = [];
   let transitions = getTransitionsFromState(
@@ -30,7 +29,7 @@ const evaluateHybridSystem = (
       value => hybridSystem.table.get(value)!
     ),
   } as IntegrationStep;
-  let algStep = [];
+  let algStep: number[] = [];
   while (integrationStep.x <= end) {
     algStep = eqs(integrationStep.x);
     for (const [state, transition] of transitions) {
@@ -48,8 +47,13 @@ const evaluateHybridSystem = (
         break;
       }
     }
-    const values = merge(integrationStep.values, algStep);
-    evaluationSteps.push({ x: integrationStep.x, values });
+    hybridSystem.algVariableNames.forEach((algName, index) =>
+      hybridSystem.table.set(algName, algStep[index])
+    );
+    evaluationSteps.push({
+      x: integrationStep.x,
+      values: getVariableValues(hybridSystem),
+    });
     integrationSteps.push(integrationStep);
     integrationStep = integrator.makeStep(ds, integrationStep);
     hybridSystem.table.set('time', integrationStep.x);
@@ -60,24 +64,17 @@ const evaluateHybridSystem = (
   return evaluationSteps;
 };
 
-const createMerge =
-  (hybridSystem: HybridSystem) =>
-  (diffVariables: number[], algVariables: number[]) => {
-    if (
-      algVariables.length !== hybridSystem.algVariableNames.length ||
-      diffVariables.length !== hybridSystem.diffVariableNames.length
-    ) {
-      throw new Error('Not suitable size');
-    }
-    const variableValues: VariableValue[] = [];
-    hybridSystem.diffVariableNames.forEach((diff, index) =>
-      variableValues.push({ name: diff, value: diffVariables[index] })
-    );
-    hybridSystem.algVariableNames.forEach((diff, index) =>
-      variableValues.push({ name: diff, value: algVariables[index] })
-    );
-    return variableValues;
-  };
+const getVariableValues = (hybridSystem: HybridSystem): VariableValue[] => {
+  const getValues = (variableNames: string[]): VariableValue[] =>
+    variableNames.map(name => ({
+      name: name,
+      value: hybridSystem.table.get(name)!,
+    }));
+  return [
+    ...getValues(hybridSystem.diffVariableNames),
+    ...getValues(hybridSystem.algVariableNames),
+  ];
+};
 
 const getTransitionsFromState = (
   targetState: State,
@@ -107,7 +104,7 @@ const mapHsToDs = (hs: HybridSystem): DerivativeSystem => {
   };
 };
 
-const mapHsToEs = (hs: HybridSystem): EquationSystem => {
+const mapHsToEqs = (hs: HybridSystem): EquationSystem => {
   const sharedAlgMap = stateToAlgMap(hs.sharedState);
   const stateAlgMaps = new Map(
     hs.states.map(state => [state.name, stateToAlgMap(state)])

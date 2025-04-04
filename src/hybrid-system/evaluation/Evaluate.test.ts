@@ -13,6 +13,7 @@ describe('Evaluate', () => {
           x' = 2 * time;
           y' = 3 * x;
           z = 3 * time;
+          t' = z;
       }
     } from b on (1 >= 2);
     `;
