@@ -1,13 +1,12 @@
-import { AssignExpression } from '../../expressions/assign/AssignExpression';
 import { Integrator } from '../integration/types/Integrator';
 import { IntegrationStep } from '../integration/types/IntegrationStep';
 import { DerivativeSystem } from '../integration/types/DerivativeSystem';
 import { Variable } from '../types/Variable';
 import { HybridSystem } from '../types/HybridSystem';
 import { State } from '../types/State';
-import { Transition } from '../types/Transition';
 import { EquationSystem } from './types/EquationSystem';
 import { EvaluationStep, VariableValue } from './types/EvaluationStep';
+import { TransitionController } from './TransitionController';
 
 const evaluateHybridSystem = (
   hybridSystem: HybridSystem,
@@ -19,10 +18,6 @@ const evaluateHybridSystem = (
   const eqs = mapHsToEqs(hybridSystem);
   const evaluationSteps: EvaluationStep[] = [];
   const integrationSteps: IntegrationStep[] = [];
-  let transitions = getTransitionsFromState(
-    hybridSystem.activeState,
-    hybridSystem
-  );
   let integrationStep = {
     x: start,
     values: hybridSystem.diffVariableNames.map(
@@ -30,23 +25,14 @@ const evaluateHybridSystem = (
     ),
   } as IntegrationStep;
   let algStep: number[] = [];
+  const transitionController = new TransitionController(hybridSystem, () => {
+    hybridSystem.diffVariableNames.forEach((variable, index) => {
+      integrationStep.values[index] = hybridSystem.table.get(variable)!;
+    });
+  });
   while (integrationStep.x <= end) {
     algStep = eqs(integrationStep.x);
-    for (const [state, transition] of transitions) {
-      if (transition.predicate.evaluate()) {
-        hybridSystem.activeState = state;
-        transitions = getTransitionsFromState(state, hybridSystem);
-        for (const action of state.onEnterExpressions) {
-          if (action instanceof AssignExpression) {
-            action.execute();
-          }
-        }
-        hybridSystem.diffVariableNames.forEach((variable, index) => {
-          integrationStep.values[index] = hybridSystem.table.get(variable)!;
-        });
-        break;
-      }
-    }
+    transitionController.adjustState();
     hybridSystem.algVariableNames.forEach((algName, index) =>
       hybridSystem.table.set(algName, algStep[index])
     );
@@ -75,18 +61,6 @@ const getVariableValues = (hybridSystem: HybridSystem): VariableValue[] => {
     ...getValues(hybridSystem.algVariableNames),
   ];
 };
-
-const getTransitionsFromState = (
-  targetState: State,
-  hs: HybridSystem
-): [State, Transition][] =>
-  hs.states
-    .filter(s => s.name !== targetState.name)
-    .flatMap(state =>
-      state.transitions
-        .filter(t => t.from === targetState.name)
-        .map<[State, Transition]>(t => [state, t])
-    );
 
 const mapHsToDs = (hs: HybridSystem): DerivativeSystem => {
   const sharedDiffMapMap = stateToDiffMap(hs.sharedState);

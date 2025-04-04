@@ -68,6 +68,6 @@ describe('Evaluate', () => {
     );
 
     await fs.mkdir('./out', { recursive: true });
-    await fs.writeFile('./out/ball.json', JSON.stringify(result));
+    await fs.writeFile('./out/ball.json', JSON.stringify(result, null, 4));
   });
 });
