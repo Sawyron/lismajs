@@ -1,13 +1,13 @@
 import Expression from './Expression';
 
-export class BinaryExpression<T> extends Expression {
+export class BinaryExpression extends Expression {
   constructor(
     private readonly left: Expression,
     private readonly right: Expression,
     private readonly operation: string,
     private readonly operationMap: Map<
       string,
-      (left: Expression, right: Expression) => T
+      (left: Expression, right: Expression) => unknown
     >
   ) {
     super();
@@ -16,14 +16,14 @@ export class BinaryExpression<T> extends Expression {
     }
   }
 
-  public evaluate(): T {
+  public evaluate<T>(): T {
     const operation = this.operationMap.get(this.operation);
     if (operation === undefined) {
       throw new Error(
         `Could not find mapping for operation: ${this.operation}`
       );
     }
-    return operation(this.left, this.right);
+    return operation(this.left, this.right) as T;
   }
 
   toString(): string {

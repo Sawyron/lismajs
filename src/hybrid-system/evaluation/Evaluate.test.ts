@@ -12,6 +12,7 @@ describe('Evaluate', () => {
       body {
           x' = 2 * time;
           y' = 3 * x;
+          z = 3 * time;
       }
     } from b on (1 >= 2);
     `;
@@ -24,7 +25,7 @@ describe('Evaluate', () => {
       0,
       1
     );
-    console.log(result);
+    console.log(JSON.stringify(result.slice(0, 10), null, 2));
     const target = result.find(res => res.x >= 0.5);
     console.log(target);
   });

@@ -7,15 +7,19 @@ import { HybridSystem } from '../types/HybridSystem';
 import { State } from '../types/State';
 import { Transition } from '../types/Transition';
 import { EquationSystem } from './types/EquationSystem';
+import { EvaluationStep, VariableValue } from './types/EvaluationStep';
 
 const evaluateHybridSystem = (
   hybridSystem: HybridSystem,
   integrator: Integrator,
   start: number,
   end: number
-): IntegrationStep[] => {
+): EvaluationStep[] => {
   const ds = mapHsToDs(hybridSystem);
-  const steps: IntegrationStep[] = [];
+  const eqs = mapHsToEs(hybridSystem);
+  const merge = createMerge(hybridSystem);
+  const evaluationSteps: EvaluationStep[] = [];
+  const integrationSteps: IntegrationStep[] = [];
   let transitions = getTransitionsFromState(
     hybridSystem.activeState,
     hybridSystem
@@ -26,7 +30,9 @@ const evaluateHybridSystem = (
       value => hybridSystem.table.get(value)!
     ),
   } as IntegrationStep;
+  let algStep = [];
   while (integrationStep.x <= end) {
+    algStep = eqs(integrationStep.x);
     for (const [state, transition] of transitions) {
       if (transition.predicate.evaluate()) {
         hybridSystem.activeState = state;
@@ -42,15 +48,36 @@ const evaluateHybridSystem = (
         break;
       }
     }
-    steps.push(integrationStep);
+    const values = merge(integrationStep.values, algStep);
+    evaluationSteps.push({ x: integrationStep.x, values });
+    integrationSteps.push(integrationStep);
     integrationStep = integrator.makeStep(ds, integrationStep);
     hybridSystem.table.set('time', integrationStep.x);
     hybridSystem.diffVariableNames.forEach((name, index) => {
       hybridSystem.table.set(name, integrationStep.values[index]);
     });
   }
-  return steps;
+  return evaluationSteps;
 };
+
+const createMerge =
+  (hybridSystem: HybridSystem) =>
+  (diffVariables: number[], algVariables: number[]) => {
+    if (
+      algVariables.length !== hybridSystem.algVariableNames.length ||
+      diffVariables.length !== hybridSystem.diffVariableNames.length
+    ) {
+      throw new Error('Not suitable size');
+    }
+    const variableValues: VariableValue[] = [];
+    hybridSystem.diffVariableNames.forEach((diff, index) =>
+      variableValues.push({ name: diff, value: diffVariables[index] })
+    );
+    hybridSystem.algVariableNames.forEach((diff, index) =>
+      variableValues.push({ name: diff, value: algVariables[index] })
+    );
+    return variableValues;
+  };
 
 const getTransitionsFromState = (
   targetState: State,
