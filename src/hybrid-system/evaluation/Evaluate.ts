@@ -16,6 +16,7 @@ const evaluateHybridSystem = (
 ): EvaluationStep[] => {
   const ds = mapHsToDs(hybridSystem);
   const eqs = mapHsToEqs(hybridSystem);
+  const valuesProvider = hybridSystemValuesProvider(hybridSystem);
   const evaluationSteps: EvaluationStep[] = [];
   const integrationSteps: IntegrationStep[] = [];
   let integrationStep = {
@@ -38,7 +39,7 @@ const evaluateHybridSystem = (
     );
     evaluationSteps.push({
       x: integrationStep.x,
-      values: getVariableValues(hybridSystem),
+      values: valuesProvider(),
     });
     integrationSteps.push(integrationStep);
     integrationStep = integrator.makeStep(ds, integrationStep);
@@ -50,13 +51,15 @@ const evaluateHybridSystem = (
   return evaluationSteps;
 };
 
-const getVariableValues = (hybridSystem: HybridSystem): VariableValue[] => {
+const hybridSystemValuesProvider = (
+  hybridSystem: HybridSystem
+): (() => VariableValue[]) => {
   const getValues = (variableNames: string[]): VariableValue[] =>
     variableNames.map(name => ({
       name: name,
       value: hybridSystem.table.get(name)!,
     }));
-  return [
+  return () => [
     ...getValues(hybridSystem.diffVariableNames),
     ...getValues(hybridSystem.algVariableNames),
   ];
