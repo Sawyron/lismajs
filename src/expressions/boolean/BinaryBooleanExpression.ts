@@ -1,3 +1,4 @@
+import { BinaryExpressionEvaluator } from '../BinaryExpressionEvaluator';
 import Expression from '../Expression';
 import { FloatExpression } from '../float/FloatExpression';
 import { BooleanExpression } from './BooleanExpression';
@@ -79,23 +80,23 @@ const operationMap = new Map<
 export class BinaryBooleanExpression extends BooleanExpression {
   static operations = new Set<string>(operationMap.keys());
 
-  constructor(
-    private readonly left: Expression,
-    private readonly right: Expression,
-    private readonly operation: string
-  ) {
+  private readonly evaluator: BinaryExpressionEvaluator<boolean>;
+
+  constructor(left: Expression, right: Expression, operation: string) {
     super();
-    if (!operationMap.has(operation)) {
-      throw new Error(`Unknown operation: ${operation}`);
-    }
+    this.evaluator = new BinaryExpressionEvaluator(
+      left,
+      right,
+      operation,
+      operationMap
+    );
   }
 
   evaluate(): boolean {
-    const operation = operationMap.get(this.operation)!;
-    return operation(this.left, this.right);
+    return this.evaluator.evaluate();
   }
 
   toString(): string {
-    return `${this.left} ${this.right} ${this.operation}`;
+    return this.evaluator.toString();
   }
 }

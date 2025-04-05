@@ -1,3 +1,4 @@
+import { BinaryExpressionEvaluator } from '../BinaryExpressionEvaluator';
 import Expression from '../Expression';
 import { FloatExpression } from './FloatExpression';
 
@@ -36,20 +37,23 @@ const operationMap = new Map<
 export class BinaryFloatExpression extends FloatExpression {
   static operations = new Set(operationMap.keys());
 
-  constructor(
-    private readonly left: Expression,
-    private readonly right: Expression,
-    private readonly operation: string
-  ) {
+  private readonly evaluator: BinaryExpressionEvaluator<number>;
+
+  constructor(left: Expression, right: Expression, operation: string) {
     super();
+    this.evaluator = new BinaryExpressionEvaluator(
+      left,
+      right,
+      operation,
+      operationMap
+    );
   }
 
   public evaluate(): number {
-    const operation = operationMap.get(this.operation)!;
-    return operation(this.left, this.right);
+    return this.evaluator.evaluate();
   }
 
   toString(): string {
-    return `${this.left} ${this.right} ${this.operation}`;
+    return this.evaluator.toString();
   }
 }
