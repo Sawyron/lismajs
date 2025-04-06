@@ -1,8 +1,8 @@
 import { walkOnText } from '..';
-import { AssignExpression } from '../expressions/assign/AssignExpression';
 import { BinaryBooleanExpression } from '../expressions/boolean/BinaryBooleanExpression';
 import { BinaryFloatExpression } from '../expressions/float/FloatBinaryExpression';
 import { FloatExpression } from '../expressions/float/FloatExpression';
+import { AssignStatement } from '../statements/AssignStatement';
 import HybridSystemLismaListener from './HybridSystemLismaListener';
 
 describe('HybridSystemLismaListener', () => {
@@ -175,10 +175,10 @@ describe('HybridSystemLismaListener', () => {
     walkOnText(hs, code);
 
     const system = hs.getSystem();
-    expect(system.states[0].onEnterExpressions.length).toBe(1);
-    const onEnter = system.states[0].onEnterExpressions[0];
-    expect(onEnter).toBeInstanceOf(AssignExpression);
-    (onEnter as AssignExpression).execute();
+    expect(system.states[0].onEnterStatements.length).toBe(1);
+    const onEnter = system.states[0].onEnterStatements[0];
+    expect(onEnter).toBeInstanceOf(AssignStatement);
+    (onEnter as AssignStatement).execute();
     expect(system.table.get('x')).toBe(10);
   });
 

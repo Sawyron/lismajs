@@ -1,4 +1,3 @@
-import { AssignExpression } from '../../expressions/assign/AssignExpression';
 import { HybridSystem } from '../types/HybridSystem';
 import { State } from '../types/State';
 import { Transition } from '../types/Transition';
@@ -25,12 +24,10 @@ export class TransitionController {
     for (const [state, transition] of transitions) {
       if (transition.predicate.evaluate()) {
         this.hybridSystem.activeState = state;
-        for (const action of state.onEnterExpressions) {
-          if (action instanceof AssignExpression) {
-            action.execute();
-          }
-          this.onStateChanged();
+        for (const action of state.onEnterStatements) {
+          action.execute();
         }
+        this.onStateChanged();
         break;
       }
     }

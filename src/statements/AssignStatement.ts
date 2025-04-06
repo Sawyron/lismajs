@@ -1,7 +1,7 @@
-import Expression from '../Expression';
-import { FloatExpression } from '../float/FloatExpression';
+import { FloatExpression } from '../expressions/float/FloatExpression';
+import Statement from './Statement';
 
-export class AssignExpression extends Expression {
+export class AssignStatement extends Statement {
   constructor(
     private readonly id: string,
     private readonly expression: FloatExpression,
@@ -10,7 +10,7 @@ export class AssignExpression extends Expression {
     super();
   }
 
-  execute() {
+  public execute(): void {
     this.table.set(this.id, this.expression.evaluate());
   }
 }

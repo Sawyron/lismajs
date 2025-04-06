@@ -24,8 +24,8 @@ import { BinaryBooleanExpression } from '../expressions/boolean/BinaryBooleanExp
 import { BinaryFloatExpression } from '../expressions/float/FloatBinaryExpression';
 import { BooleanExpression } from '../expressions/boolean/BooleanExpression';
 import { FloatVariableExpression } from '../expressions/float/FloatVariableExpression';
-import { AssignExpression } from '../expressions/assign/AssignExpression';
 import { FloatUnaryExpression } from '../expressions/float/FloatUnaryExpression';
+import { AssignStatement } from '../statements/AssignStatement';
 
 export default class HybridSystemLismaListener extends LismaListener {
   private states: State[] = [];
@@ -87,7 +87,7 @@ export default class HybridSystemLismaListener extends LismaListener {
       diffVariables: [],
       algVariables: [],
       transitions: [],
-      onEnterExpressions: [],
+      onEnterStatements: [],
     });
   };
 
@@ -107,10 +107,10 @@ export default class HybridSystemLismaListener extends LismaListener {
       this.algStack = [];
     } else if (ctx._part.text === 'onEnter') {
       const state = this.states.at(-1)!;
-      state.onEnterExpressions = [
+      state.onEnterStatements = [
         ...this.algStack.map(
           def =>
-            new AssignExpression(def.name, def.expression, this.variableTable)
+            new AssignStatement(def.name, def.expression, this.variableTable)
         ),
       ];
       this.algStack = [];
