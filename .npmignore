@@ -2,6 +2,7 @@ node_modules
 .antlr
 *.g4
 .prettierrc
+tsconfig.json
 *.config.{js,mjs,cjs,ts}
 *.test.{js,mjs,cjs,ts}
 src

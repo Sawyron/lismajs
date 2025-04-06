@@ -1,12 +1,12 @@
 {
-  "name": "lismajs",
-  "version": "1.0.0",
+  "name": "@sawyron/lismajs",
+  "version": "0.0.1",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "test": "jest",
     "generate": "rimraf ./src/gen && antlr4 -Dlanguage=TypeScript -o src/gen -visitor Lisma.g4",
-    "build": "tsc",
+    "build": "tsc && tsc-alias",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prepack": "npm run build",
@@ -17,9 +17,6 @@
   "author": "Viacheslav Shpak",
   "license": "ISC",
   "description": "",
-  "dependencies": {
-    "antlr4": "^4.13.2"
-  },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
     "@types/jest": "^29.5.14",
@@ -32,7 +29,11 @@
     "prettier": "3.5.2",
     "rimraf": "^6.0.1",
     "ts-jest": "^29.2.5",
+    "tsc-alias": "^1.8.13",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.24.1"
+  },
+  "dependencies": {
+    "antlr4": "^4.13.2"
   }
 }
