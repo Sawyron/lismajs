@@ -1,6 +1,7 @@
 node_modules
 .antlr
 *.g4
+*.tgz
 .prettierrc
 tsconfig.json
 *.config.{js,mjs,cjs,ts}

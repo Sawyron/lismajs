@@ -6,11 +6,11 @@ state:
 stateTransitions: transition ( ',' transition)*;
 statePart:
 	part = 'body' LBRACKET statement* RBRACKET
-	| part = 'onEnter' LBRACKET algDef DELIMITER RBRACKET;
+	| part = 'onEnter' LBRACKET algDef* RBRACKET;
 transition: 'from' ID (',' ID)* 'on' LPAREN expr RPAREN;
-statement: (diffDef | algDef) DELIMITER;
-diffDef: ID '\'' '=' expr;
-algDef: ID '=' expr;
+statement: diffDef | algDef;
+diffDef: ID '\'' '=' expr DELIMITER;
+algDef: ID '=' expr DELIMITER;
 initCond: ID '(' 't0' ')' eq = '=' expr DELIMITER;
 constDef: 'const' ID '=' expr DELIMITER;
 expr:
