@@ -1,4 +1,5 @@
 node_modules
+coverage
 .antlr
 *.g4
 *.tgz

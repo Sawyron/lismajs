@@ -4,6 +4,7 @@ import {
   ErrorListener,
   ParseTree,
   ParseTreeListener,
+  ParseTreeVisitor,
   ParseTreeWalker,
   Token,
 } from 'antlr4';
@@ -17,12 +18,31 @@ type CompileConfig = {
   parserErrorListener?: ErrorListener<Token>;
 };
 
-function walkOnText<T extends ParseTreeListener>(
-  walker: T,
+const walkOnText = (
+  walker: ParseTreeListener,
   source: string,
   config: CompileConfig = {},
   ruleExtractor: (parser: LismaParser) => ParseTree = parser => parser.prog()
-) {
+) => {
+  const tree = compile(source, config, ruleExtractor);
+  ParseTreeWalker.DEFAULT.walk(walker, tree);
+};
+
+const visitText = <T>(
+  visitor: ParseTreeVisitor<T>,
+  source: string,
+  config: CompileConfig = {},
+  ruleExtractor: (parser: LismaParser) => ParseTree = parser => parser.prog()
+): T => {
+  const tree = compile(source, config, ruleExtractor);
+  return visitor.visit(tree);
+};
+
+const compile = (
+  source: string,
+  config: CompileConfig = {},
+  ruleExtractor: (parser: LismaParser) => ParseTree = parser => parser.prog()
+) => {
   const chars = new CharStream(source);
   const lexer = new LismaLexer(chars);
 
@@ -41,8 +61,7 @@ function walkOnText<T extends ParseTreeListener>(
     parser.addErrorListener(parserErrorListener);
   }
 
-  const tree = ruleExtractor(parser);
-  ParseTreeWalker.DEFAULT.walk(walker, tree);
-}
+  return ruleExtractor(parser);
+};
 
-export { CompileConfig, walkOnText, LismaErrorListener, LismaError };
+export { walkOnText, visitText, CompileConfig, LismaErrorListener, LismaError };

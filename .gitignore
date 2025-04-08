@@ -1,5 +1,6 @@
 *.tgz
 node_modules
+coverage
 src/gen/**/*
 .antlr
 dist

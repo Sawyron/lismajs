@@ -20,23 +20,26 @@ import {
   FloatConstExpression,
   FloatExpression,
 } from '../expressions/float/FloatExpression';
-import { BinaryBooleanExpression } from '../expressions/boolean/BinaryBooleanExpression';
-import { BinaryFloatExpression } from '../expressions/float/FloatBinaryExpression';
 import { BooleanExpression } from '../expressions/boolean/BooleanExpression';
-import { FloatVariableExpression } from '../expressions/float/FloatVariableExpression';
-import { FloatUnaryExpression } from '../expressions/float/FloatUnaryExpression';
 import { AssignStatement } from '../statements/AssignStatement';
+import { ExpressionLismaVisitor } from '../expressions/ExpressionLismaVisitor';
 
 export default class HybridSystemLismaListener extends LismaListener {
+  private readonly exprVisitor: ExpressionLismaVisitor;
   private states: State[] = [];
   private diffStack: Variable[] = [];
   private algStack: Variable[] = [];
-  private expressionStack: Expression[] = [];
+  //private expressionStack: Expression[] = [];
   private transitionStack: Transition[] = [];
   private constants: Constant[] = [];
   private initials = new Map<string, FloatExpression>();
   private readonly variableTable = new Map<string, number>();
   private errors: LismaError[] = [];
+
+  constructor() {
+    super();
+    this.exprVisitor = new ExpressionLismaVisitor(this.variableTable);
+  }
 
   public getSystem(): HybridSystem {
     const initials = new Map(this.initials);
@@ -118,7 +121,7 @@ export default class HybridSystemLismaListener extends LismaListener {
   };
 
   exitDiffDef = (ctx: DiffDefContext) => {
-    const expression = this.expressionStack.pop();
+    const expression = this.getExpression(ctx.expr());
     if (!(expression instanceof FloatExpression)) {
       const token = ctx.ID().symbol;
       this.errors.push({
@@ -135,7 +138,7 @@ export default class HybridSystemLismaListener extends LismaListener {
   };
 
   exitAlgDef = (ctx: AlgDefContext) => {
-    const expression = this.expressionStack.pop();
+    const expression = this.getExpression(ctx.expr());
     if (!(expression instanceof FloatExpression)) {
       const token = ctx.ID().symbol;
       this.errors.push({
@@ -152,7 +155,7 @@ export default class HybridSystemLismaListener extends LismaListener {
   };
 
   exitTransition = (ctx: TransitionContext) => {
-    const predicate = this.expressionStack.pop()!;
+    const predicate = this.getExpression(ctx.expr());
     if (!(predicate instanceof BooleanExpression)) {
       const token = ctx.LPAREN().symbol;
       this.errors.push({
@@ -170,50 +173,8 @@ export default class HybridSystemLismaListener extends LismaListener {
     );
   };
 
-  exitExpr = (ctx: ExprContext) => {
-    if (ctx.ID()) {
-      this.expressionStack.push(
-        new FloatVariableExpression(ctx.ID().getText(), this.variableTable)
-      );
-    } else if (ctx.NUMBER()) {
-      this.expressionStack.push(
-        new FloatConstExpression(Number(ctx.NUMBER().getText()))
-      );
-    } else if (ctx._luop) {
-      const operation = ctx._luop.text;
-      if (FloatUnaryExpression.operations.has(operation)) {
-        const expression = this.expressionStack.pop()!;
-        if (!(expression instanceof FloatExpression)) {
-          return;
-        }
-        this.expressionStack.push(
-          new FloatUnaryExpression(expression, operation)
-        );
-      } else {
-        this.errors.push({
-          charPosition: ctx._luop.start,
-          line: ctx._luop.line,
-          message: 'Can not apply unary operation',
-        });
-      }
-    } else if (ctx._bop) {
-      const right = this.expressionStack.pop()!;
-      const left = this.expressionStack.pop()!;
-      const operation = ctx._bop.text;
-      if (BinaryBooleanExpression.operations.has(operation)) {
-        this.expressionStack.push(
-          new BinaryBooleanExpression(left, right, operation)
-        );
-      } else if (BinaryFloatExpression.operations.has(operation)) {
-        this.expressionStack.push(
-          new BinaryFloatExpression(left, right, operation)
-        );
-      }
-    }
-  };
-
   exitConstDef = (ctx: ConstDefContext) => {
-    const expression = this.expressionStack.pop();
+    const expression = this.getExpression(ctx.expr());
     if (!(expression instanceof FloatExpression)) {
       const token = ctx.ID().symbol;
       this.errors.push({
@@ -230,7 +191,7 @@ export default class HybridSystemLismaListener extends LismaListener {
   };
 
   exitInitCond = (ctx: InitCondContext) => {
-    const expression = this.expressionStack.pop();
+    const expression = this.getExpression(ctx.expr());
     if (!(expression instanceof FloatExpression)) {
       const token = ctx._eq;
       this.errors.push({
@@ -242,4 +203,17 @@ export default class HybridSystemLismaListener extends LismaListener {
     }
     this.initials.set(ctx.ID().getText(), expression);
   };
+
+  private getExpression(ctx: ExprContext): Expression {
+    try {
+      return this.exprVisitor.visit(ctx);
+    } catch (error) {
+      this.errors.push({
+        charPosition: ctx.start.start,
+        line: ctx.start.line,
+        message: String(error),
+      });
+      return new FloatConstExpression(0);
+    }
+  }
 }
