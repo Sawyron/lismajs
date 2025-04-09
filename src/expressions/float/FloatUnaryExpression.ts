@@ -9,7 +9,7 @@ const operationMap = new Map<string, (expression: FloatExpression) => number>();
 }
 
 export class FloatUnaryExpression extends FloatExpression {
-  static operations = new Set(operationMap.keys());
+  static operations: ReadonlySet<string> = new Set(operationMap.keys());
 
   constructor(
     private readonly inner: FloatExpression,

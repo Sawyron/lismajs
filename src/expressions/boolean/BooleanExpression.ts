@@ -1,4 +1,4 @@
-import Expression from '../Expression';
+import { Expression } from '../Expression';
 
 export abstract class BooleanExpression extends Expression {
   abstract evaluate(): boolean;

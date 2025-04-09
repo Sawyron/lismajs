@@ -1,5 +1,5 @@
 import { BinaryExpressionEvaluator } from '../BinaryExpressionEvaluator';
-import Expression from '../Expression';
+import { Expression } from '../Expression';
 import { FloatExpression } from '../float/FloatExpression';
 import { BooleanExpression } from './BooleanExpression';
 
@@ -78,7 +78,7 @@ const operationMap = new Map<
 }
 
 export class BinaryBooleanExpression extends BooleanExpression {
-  static operations = new Set<string>(operationMap.keys());
+  static operations: ReadonlySet<string> = new Set(operationMap.keys());
 
   private readonly evaluator: BinaryExpressionEvaluator<boolean>;
 

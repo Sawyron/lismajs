@@ -3,7 +3,7 @@ import { BinaryBooleanExpression } from '../expressions/boolean/BinaryBooleanExp
 import { BinaryFloatExpression } from '../expressions/float/FloatBinaryExpression';
 import { FloatExpression } from '../expressions/float/FloatExpression';
 import { AssignStatement } from '../statements/AssignStatement';
-import HybridSystemLismaListener from './HybridSystemLismaListener';
+import { HybridSystemLismaListener } from './HybridSystemLismaListener';
 
 describe('HybridSystemLismaListener', () => {
   it('should work', () => {

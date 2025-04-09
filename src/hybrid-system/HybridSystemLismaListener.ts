@@ -15,21 +15,19 @@ import { Variable } from './types/Variable';
 import { HybridSystem } from './types/HybridSystem';
 import { State } from './types/State';
 import { Transition } from './types/Transition';
-import Expression from '../expressions/Expression';
-import {
-  FloatConstExpression,
-  FloatExpression,
-} from '../expressions/float/FloatExpression';
+import { Expression } from '../expressions/Expression';
+import { FloatExpression } from '../expressions/float/FloatExpression';
+import { FloatConstExpression } from '../expressions/float/FloatConstExpression';
 import { BooleanExpression } from '../expressions/boolean/BooleanExpression';
 import { AssignStatement } from '../statements/AssignStatement';
 import { ExpressionLismaVisitor } from '../expressions/ExpressionLismaVisitor';
+import { DeadEndExpression } from '../expressions/DeadEndExpression';
 
-export default class HybridSystemLismaListener extends LismaListener {
+export class HybridSystemLismaListener extends LismaListener {
   private readonly exprVisitor: ExpressionLismaVisitor;
   private states: State[] = [];
   private diffStack: Variable[] = [];
   private algStack: Variable[] = [];
-  //private expressionStack: Expression[] = [];
   private transitionStack: Transition[] = [];
   private constants: Constant[] = [];
   private initials = new Map<string, FloatExpression>();
@@ -205,15 +203,10 @@ export default class HybridSystemLismaListener extends LismaListener {
   };
 
   private getExpression(ctx: ExprContext): Expression {
-    try {
-      return this.exprVisitor.visit(ctx);
-    } catch (error) {
-      this.errors.push({
-        charPosition: ctx.start.start,
-        line: ctx.start.line,
-        message: String(error),
-      });
-      return new FloatConstExpression(0);
+    const expression = this.exprVisitor.visit(ctx);
+    if (expression instanceof DeadEndExpression) {
+      this.errors.push(expression.error);
     }
+    return expression;
   }
 }

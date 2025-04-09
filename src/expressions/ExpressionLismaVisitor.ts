@@ -1,3 +1,4 @@
+import { ParserRuleContext } from 'antlr4';
 import {
   AtomExprContext,
   BinaryExprContext,
@@ -6,11 +7,14 @@ import {
 } from '../gen/LismaParser';
 import LismaVisitor from '../gen/LismaVisitor';
 import { BinaryBooleanExpression } from './boolean/BinaryBooleanExpression';
-import Expression from './Expression';
+import { DeadEndExpression } from './DeadEndExpression';
+import { Expression } from './Expression';
 import { BinaryFloatExpression } from './float/FloatBinaryExpression';
-import { FloatConstExpression, FloatExpression } from './float/FloatExpression';
+import { FloatExpression } from './float/FloatExpression';
+import { FloatConstExpression } from './float/FloatConstExpression';
 import { FloatUnaryExpression } from './float/FloatUnaryExpression';
 import { FloatVariableExpression } from './float/FloatVariableExpression';
+import { LismaError } from '../types/LismaError';
 
 export class ExpressionLismaVisitor extends LismaVisitor<Expression> {
   constructor(private readonly variableTable: Map<string, number> = new Map()) {
@@ -26,7 +30,9 @@ export class ExpressionLismaVisitor extends LismaVisitor<Expression> {
     if (BinaryBooleanExpression.operations.has(operation)) {
       return new BinaryBooleanExpression(left, right, operation);
     }
-    throw new Error('Unreachable state');
+    return new DeadEndExpression(
+      errorFromRuleContext(ctx, 'Unreachable state')
+    );
   };
 
   visitUnaryExpr = (ctx: UnaryExprContext): Expression => {
@@ -34,11 +40,15 @@ export class ExpressionLismaVisitor extends LismaVisitor<Expression> {
     if (FloatUnaryExpression.operations.has(operation)) {
       const expr = this.visit(ctx.expr());
       if (!(expr instanceof FloatExpression)) {
-        throw Error('Can not apply unary operation');
+        return new DeadEndExpression(
+          errorFromRuleContext(ctx, 'Can not apply unary operation')
+        );
       }
       return new FloatUnaryExpression(expr, operation);
     }
-    throw new Error('Unreachable state');
+    return new DeadEndExpression(
+      errorFromRuleContext(ctx, 'Unreachable state')
+    );
   };
 
   visitParenExpr = (ctx: ParenExprContext): Expression => {
@@ -55,6 +65,17 @@ export class ExpressionLismaVisitor extends LismaVisitor<Expression> {
         this.variableTable
       );
     }
-    throw new Error('Unreachable state');
+    return new DeadEndExpression(
+      errorFromRuleContext(ctx, 'Unreachable state')
+    );
   };
 }
+
+const errorFromRuleContext = (
+  ctx: ParserRuleContext,
+  message: string
+): LismaError => ({
+  message: message,
+  charPosition: ctx.start.start,
+  line: ctx.start.line,
+});

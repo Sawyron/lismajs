@@ -64,4 +64,11 @@ const compile = (
   return ruleExtractor(parser);
 };
 
-export { walkOnText, visitText, CompileConfig, LismaErrorListener, LismaError };
+export {
+  compile,
+  walkOnText,
+  visitText,
+  CompileConfig,
+  LismaErrorListener,
+  LismaError,
+};

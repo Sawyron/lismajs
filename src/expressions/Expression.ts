@@ -1,1 +1,1 @@
-export default abstract class Expression {}
+export abstract class Expression {}

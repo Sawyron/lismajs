@@ -1,3 +1,3 @@
-export default abstract class Statement {
+export abstract class Statement {
   public abstract execute(): void;
 }

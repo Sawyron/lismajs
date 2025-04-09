@@ -1,7 +1,8 @@
 import { visitText } from '..';
 import { ExpressionLismaVisitor } from './ExpressionLismaVisitor';
 import { BinaryFloatExpression } from './float/FloatBinaryExpression';
-import { FloatConstExpression, FloatExpression } from './float/FloatExpression';
+import { FloatConstExpression } from './float/FloatConstExpression';
+import { FloatExpression } from './float/FloatExpression';
 import { FloatVariableExpression } from './float/FloatVariableExpression';
 
 describe('ExpressionLismaVisitor', () => {

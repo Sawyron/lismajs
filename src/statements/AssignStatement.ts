@@ -1,5 +1,5 @@
 import { FloatExpression } from '../expressions/float/FloatExpression';
-import Statement from './Statement';
+import { Statement } from './Statement';
 
 export class AssignStatement extends Statement {
   constructor(
