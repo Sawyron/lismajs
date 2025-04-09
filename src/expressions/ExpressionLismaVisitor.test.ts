@@ -1,4 +1,5 @@
 import { visitText } from '..';
+import { DeadEndExpression } from './DeadEndExpression';
 import { ExpressionLismaVisitor } from './ExpressionLismaVisitor';
 import { BinaryFloatExpression } from './float/FloatBinaryExpression';
 import { FloatConstExpression } from './float/FloatConstExpression';
@@ -39,5 +40,12 @@ describe('ExpressionLismaVisitor', () => {
 
     expect(expression).toBeInstanceOf(FloatExpression);
     expect((expression as FloatExpression).evaluate()).toBe(answer);
+  });
+  it('should evaluate to dead end if unary "-" operator is applied to boolean expr', () => {
+    const code = '-(2 >= 3)';
+    const visitor = new ExpressionLismaVisitor();
+    const expression = visitText(visitor, code, {}, parser => parser.expr());
+
+    expect(expression).toBeInstanceOf(DeadEndExpression);
   });
 });
