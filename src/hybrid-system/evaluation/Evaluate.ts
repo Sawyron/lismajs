@@ -1,6 +1,6 @@
-import { Integrator } from '../integration/types/Integrator';
-import { IntegrationStep } from '../integration/types/IntegrationStep';
-import { DerivativeSystem } from '../integration/types/DerivativeSystem';
+import { Integrator } from '../../integration/types/Integrator';
+import { IntegrationStep } from '../../integration/types/IntegrationStep';
+import { DerivativeSystem } from '../../integration/types/DerivativeSystem';
 import { Variable } from '../types/Variable';
 import { HybridSystem } from '../types/HybridSystem';
 import { State } from '../types/State';
