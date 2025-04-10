@@ -32,6 +32,31 @@ describe('Evaluate', () => {
     console.log(target);
   });
 
+  it('should work with when statement', async () => {
+    const hs = new HybridSystemLismaListener();
+    const code = `
+    state shared {
+      body {
+          x' = 2;
+      }
+    };
+    when (x >= 0.5) {
+        x = 0;
+    }
+    `;
+    walkOnText(hs, code);
+
+    const system = hs.getSystem();
+    const result = evaluateHybridSystem(
+      system,
+      new EulerIntegrator(0.001),
+      0,
+      1
+    );
+    await fs.mkdir('./out', { recursive: true });
+    await fs.writeFile('./out/when_test.json', JSON.stringify(result, null, 4));
+  });
+
   it('should evaluate ball', async () => {
     const hs = new HybridSystemLismaListener();
     const code = `

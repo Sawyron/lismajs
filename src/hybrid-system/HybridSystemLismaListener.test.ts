@@ -182,47 +182,25 @@ describe('HybridSystemLismaListener', () => {
     expect(system.table.get('x')).toBe(10);
   });
 
-  it('should parse ball system', () => {
+  it('should parse when statements', () => {
     const hs = new HybridSystemLismaListener();
     const code = `
-        const g = 9.81;
-        y(t0) = 10;
-
-        state init {
+      state shared {
           body {
-              v' = -g;
-              y' = v;
+              x' = 2;
           }
-        };
-    
-        state vzlet {
-            body {
-                v' = -g;
-                y' = v;
-            }
-            onEnter {
-                v = -v;
-            }
-        } from init, padenie on (y < 0);
-    
-        state padenie {
-            body {
-              v' = -g;
-              y' = v;
-            }
-        } from init, vzlet on (v < 0);
+      };
+      when (x >= 3) {
+          x = 0;
+      }
         `;
     walkOnText(hs, code);
 
     const system = hs.getSystem();
-    expect(system.states.length).toBe(3);
+    expect(system.states.length).toBe(1);
 
-    const initState = system.states[0];
-    expect(initState.name).toBe('init');
-    expect(initState.transitions.length).toBe(0);
-
-    const upState = system.states[1];
-    expect(upState.name).toBe('vzlet');
-    expect(upState.transitions.length).toBe(2);
+    expect(system.whenClauses.length).toBe(1);
+    const [whenClause] = system.whenClauses;
+    expect(String(whenClause.predicate)).toBe('x 3 >=');
   });
 });

@@ -7,6 +7,7 @@ import { State } from '../types/State';
 import { EquationSystem } from './types/EquationSystem';
 import { EvaluationStep, VariableValue } from './types/EvaluationStep';
 import { TransitionController } from './TransitionController';
+import { WhenStatementProcessor as WhenClauseProcessor } from './WhenClausetProcessor';
 
 const evaluateHybridSystem = (
   hybridSystem: HybridSystem,
@@ -31,6 +32,8 @@ const evaluateHybridSystem = (
       integrationStep.values[index] = hybridSystem.table.get(variable)!;
     });
   });
+  const whenProcessor = new WhenClauseProcessor(hybridSystem.whenClauses);
+  whenProcessor.init();
   while (integrationStep.x <= end) {
     algStep = eqs(integrationStep.x);
     transitionController.adjustState();
@@ -41,6 +44,10 @@ const evaluateHybridSystem = (
       x: integrationStep.x,
       values: valuesProvider(),
     });
+    whenProcessor.process();
+    integrationStep.values = hybridSystem.diffVariableNames.map(
+      value => hybridSystem.table.get(value)!
+    );
     integrationSteps.push(integrationStep);
     integrationStep = integrator.makeStep(ds, integrationStep);
     hybridSystem.table.set('time', integrationStep.x);

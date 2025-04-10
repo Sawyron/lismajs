@@ -8,6 +8,7 @@ import {
   StateContext,
   StatePartContext,
   TransitionContext,
+  WhenStatementContext,
 } from '../gen/LismaParser';
 import { LismaError } from '../types/LismaError';
 import { Constant } from './types/Constant';
@@ -22,6 +23,7 @@ import { BooleanExpression } from '../expressions/boolean/BooleanExpression';
 import { AssignStatement } from '../statements/AssignStatement';
 import { ExpressionLismaVisitor } from '../expressions/ExpressionLismaVisitor';
 import { DeadEndExpression } from '../expressions/DeadEndExpression';
+import { WhenClause } from './types/WhenClause';
 
 export class HybridSystemLismaListener extends LismaListener {
   private readonly exprVisitor: ExpressionLismaVisitor;
@@ -29,6 +31,7 @@ export class HybridSystemLismaListener extends LismaListener {
   private diffStack: Variable[] = [];
   private algStack: Variable[] = [];
   private transitionStack: Transition[] = [];
+  private whenClauseStack: WhenClause[] = [];
   private constants: Constant[] = [];
   private initials = new Map<string, FloatExpression>();
   private readonly variableTable = new Map<string, number>();
@@ -74,6 +77,7 @@ export class HybridSystemLismaListener extends LismaListener {
       table: this.variableTable,
       sharedState: sharedState,
       activeState: sharedState,
+      whenClauses: [...this.whenClauseStack],
     };
   }
 
@@ -199,6 +203,28 @@ export class HybridSystemLismaListener extends LismaListener {
       return;
     }
     this.initials.set(ctx.ID().getText(), expression);
+  };
+
+  exitWhenStatement = (ctx: WhenStatementContext) => {
+    const predicate = this.getExpression(ctx.expr());
+    if (!(predicate instanceof BooleanExpression)) {
+      this.errors.push({
+        message: 'expression for "when" statement must be of boolean type',
+        charPosition: ctx.start.start,
+        line: ctx.start.line,
+      });
+      return;
+    }
+    this.whenClauseStack.push({
+      predicate: predicate,
+      statements: [
+        ...this.algStack.map(
+          def =>
+            new AssignStatement(def.name, def.expression, this.variableTable)
+        ),
+      ],
+    });
+    this.algStack = [];
   };
 
   private getExpression(ctx: ExprContext): Expression {
