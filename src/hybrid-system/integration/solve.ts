@@ -2,7 +2,7 @@ import { DerivativeSystem } from './types/DerivativeSystem';
 import { IntegrationStep } from './types/IntegrationStep';
 import { Integrator } from './types/Integrator';
 
-export function solve(
+export function solveOdeSystem(
   system: DerivativeSystem,
   initialStep: IntegrationStep,
   end: number,

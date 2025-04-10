@@ -1,6 +1,6 @@
 import AdaptiveRungeKutta2Integrator from './AdaptiveRungeKutta2Integrator';
 import { DerivativeSystem } from './types/DerivativeSystem';
-import { solve } from './solve';
+import { solveOdeSystem } from './solve';
 
 describe('AdaptiveRungeKutta2Integrator', () => {
   it('should work', () => {
@@ -13,7 +13,7 @@ describe('AdaptiveRungeKutta2Integrator', () => {
     const end = 5;
 
     const values = [1];
-    const steps = solve(system, { x: 0, values }, end, integrator);
+    const steps = solveOdeSystem(system, { x: 0, values }, end, integrator);
 
     console.log(steps.at(-1));
   });

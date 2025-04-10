@@ -1,5 +1,5 @@
 import { Variable } from './Variable';
-import { Transition as Transition } from './Transition';
+import { Transition } from './Transition';
 import { Statement } from '../../statements/Statement';
 
 export type State = {

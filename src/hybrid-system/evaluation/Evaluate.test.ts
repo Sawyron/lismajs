@@ -1,6 +1,6 @@
 import { walkOnText } from '../..';
 import { evaluateHybridSystem } from './Evaluate';
-import HybridSystemLismaListener from '../HybridSystemLismaListener';
+import { HybridSystemLismaListener } from '../HybridSystemLismaListener';
 import EulerIntegrator from '../integration/EulerIntegrator';
 import fs from 'fs/promises';
 

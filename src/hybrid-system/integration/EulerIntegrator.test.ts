@@ -1,6 +1,6 @@
 import EulerIntegrator from './EulerIntegrator';
 import { DerivativeSystem } from './types/DerivativeSystem';
-import { solve } from './solve';
+import { solveOdeSystem } from './solve';
 
 describe('EulerIntegrator', () => {
   it('should work', () => {
@@ -12,7 +12,12 @@ describe('EulerIntegrator', () => {
     const end = 2;
 
     const values = [0, 0];
-    const steps = solve(system, { x: 0, values: values }, end, integrator);
+    const steps = solveOdeSystem(
+      system,
+      { x: 0, values: values },
+      end,
+      integrator
+    );
 
     const target = steps.find(step => step.x >= 0.5);
     console.log(target);
