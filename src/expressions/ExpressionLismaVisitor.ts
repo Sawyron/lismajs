@@ -2,6 +2,7 @@ import { ParserRuleContext } from 'antlr4';
 import {
   AtomExprContext,
   BinaryExprContext,
+  CallExprContext,
   ParenExprContext,
   UnaryExprContext,
 } from '../gen/LismaParser';
@@ -15,6 +16,7 @@ import { FloatConstExpression } from './float/FloatConstExpression';
 import { FloatUnaryExpression } from './float/FloatUnaryExpression';
 import { FloatVariableExpression } from './float/FloatVariableExpression';
 import { LismaError } from '../types/LismaError';
+import { FloatFunctionCallExpression } from './float/FloatFunctionCallExpression';
 
 export class ExpressionLismaVisitor extends LismaVisitor<Expression> {
   constructor(private readonly variableTable: Map<string, number> = new Map()) {
@@ -48,6 +50,17 @@ export class ExpressionLismaVisitor extends LismaVisitor<Expression> {
     }
     return new DeadEndExpression(
       errorFromRuleContext(ctx, 'Unreachable state')
+    );
+  };
+
+  visitCallExpr = (ctx: CallExprContext): Expression => {
+    const id = ctx.ID().getText();
+    const callArguments = ctx.expr_list().map(expr => this.visit(expr));
+    if (FloatFunctionCallExpression.buildInFunctionNames.has(id)) {
+      return new FloatFunctionCallExpression(id, callArguments);
+    }
+    return new DeadEndExpression(
+      errorFromRuleContext(ctx, 'Undefined function')
     );
   };
 
