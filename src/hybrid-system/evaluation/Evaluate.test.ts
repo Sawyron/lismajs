@@ -45,18 +45,18 @@ describe('Evaluate', () => {
       }
     };
 
-    state vzlet {
+    state up {
         onEnter {
             v = -v;
         }
-    } from shared, padenie on (y < 0);
+    } from shared, down on (y < 0);
 
-    state padenie {
+    state down {
         body {
             v' = -g;
             y' = v;
         }
-    } from shared, vzlet on (v < 0);
+    } from shared, up on (v < 0);
     `;
     walkOnText(hs, code);
 
@@ -99,13 +99,13 @@ describe('Evaluate', () => {
 
     state separate {
         body {
-          x1'=v1;
-          v1'=k1*(n1-x1)/m1;
-          x2'=v2;
-          v2'=k2*(n2-x2)/m2;
+          x1'= v1;
+          v1'= k1 * (n1 - x1) / m1;
+          x2'= v2;
+          v2'= k2 * (n2 - x2) / m2;
 
-          a1 = k1*(n1-x1)/m1;
-          a2 = k2*(n2-x2)/m2;
+          a1 = k1 * (n1 - x1) / m1;
+          a2 = k2 * (n2 - x2) / m2;
           st '= 0;
         }
         onEnter {
@@ -115,18 +115,18 @@ describe('Evaluate', () => {
 
     state together {
         body {
-            v1' = (k1*n1+k2*n2-x1*(k1+k2))/(m1+m2);
-            v2' = (k1*n1+k2*n2-x2*(k1+k2))/(m1+m2);
+            v1' = (k1 * n1 + k2 * n2 - x1 * (k1 + k2)) / (m1 + m2);
+            v2' = (k1 * n1 + k2 * n2 - x2 * (k1 + k2)) / (m1 + m2);
             x1' = v1;
             x2' = v2;
 
-            a1 = (k1*n1+k2*n2-x1*(k1+k2))/(m1+m2);
-            a2 = (k1*n1+k2*n2-x2*(k1+k2))/(m1+m2);
+            a1 = (k1 * n1 + k2 * n2 - x1 * (k1 + k2)) / (m1 + m2);
+            a2 = (k1 * n1 + k2 * n2 - x2 * (k1 + k2)) / (m1 + m2);
             st'= -st;
         }
         onEnter {
             st = 10;
-            v1 = (m1*v1+m2*v2)/(m1+m2);
+            v1 = (m1 * v1 + m2 * v2) / (m1 + m2);
             v2 = v1;
         }
     } from shared, separate on (x1 > =x2 && v1 >= v2);
