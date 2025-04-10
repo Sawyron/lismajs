@@ -55,14 +55,13 @@ export class HybridSystemLismaListener extends LismaListener {
       this.variableTable.set(constant.name, constant.expression.evaluate());
     }
     this.variableTable.set('time', 0);
-    const sharedState = this.states.find(state => state.name === 'shared');
-    if (sharedState === undefined) {
-      this.errors.push({
-        line: 0,
-        charPosition: 0,
-        message: 'Shared state is not defined',
-      });
-    }
+    const sharedState = this.states.find(state => state.name === 'shared') ?? {
+      name: 'shared',
+      algVariables: [],
+      diffVariables: [],
+      onEnterStatements: [],
+      transitions: [],
+    };
     return {
       diffVariableNames: [
         ...new Set(this.states.flatMap(s => s.diffVariables).map(d => d.name)),
@@ -73,8 +72,8 @@ export class HybridSystemLismaListener extends LismaListener {
       states: [...this.states],
       constants: [...this.constants],
       table: this.variableTable,
-      sharedState: sharedState!,
-      activeState: sharedState!,
+      sharedState: sharedState,
+      activeState: sharedState,
     };
   }
 
