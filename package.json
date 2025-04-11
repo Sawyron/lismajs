@@ -8,6 +8,10 @@
       "default": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
+    "./core": {
+      "default": "./dist/core.js",
+      "types": "./dist/core.d.ts"
+    },
     "./expressions": {
       "default": "./dist/expressions/index.js",
       "types": "./dist/expressions/index.d.ts"
