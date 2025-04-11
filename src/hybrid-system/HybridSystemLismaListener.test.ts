@@ -1,4 +1,5 @@
-import { walkOnText } from '..';
+import { Token } from 'antlr4';
+import { LismaErrorListener, walkOnText } from '..';
 import { BinaryBooleanExpression } from '../expressions/boolean/BinaryBooleanExpression';
 import { BinaryFloatExpression } from '../expressions/float/FloatBinaryExpression';
 import { FloatExpression } from '../expressions/float/FloatExpression';
@@ -202,5 +203,29 @@ describe('HybridSystemLismaListener', () => {
     expect(system.whenClauses.length).toBe(1);
     const [whenClause] = system.whenClauses;
     expect(String(whenClause.predicate)).toBe('x 3 >=');
+  });
+
+  it('should not fail on lex or syntax errors', () => {
+    const hs = new HybridSystemLismaListener();
+    const code = `
+      state {
+          body {
+              x' = 2;
+          }
+      };
+      when (x >= 3) {
+          x@ = 0;
+      }
+        `;
+    const lexErrorListener = new LismaErrorListener<number>();
+    const syntaxErrorListener = new LismaErrorListener<Token>();
+
+    walkOnText(hs, code, {
+      lexerErrorListener: lexErrorListener,
+      parserErrorListener: syntaxErrorListener,
+    });
+
+    expect(lexErrorListener.errors.length).toBeGreaterThan(0);
+    expect(syntaxErrorListener.errors.length).toBeGreaterThan(0);
   });
 });

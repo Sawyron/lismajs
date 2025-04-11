@@ -24,6 +24,7 @@ import { AssignStatement } from '../statements/AssignStatement';
 import { ExpressionLismaVisitor } from '../expressions/ExpressionLismaVisitor';
 import { DeadEndExpression } from '../expressions/DeadEndExpression';
 import { WhenClause } from './types/WhenClause';
+import { ParserRuleContext } from 'antlr4';
 
 export class HybridSystemLismaListener extends LismaListener {
   private readonly exprVisitor: ExpressionLismaVisitor;
@@ -122,7 +123,7 @@ export class HybridSystemLismaListener extends LismaListener {
   };
 
   exitDiffDef = (ctx: DiffDefContext) => {
-    const expression = this.getExpression(ctx.expr());
+    const expression = this.getExpression(ctx, ctx => ctx.expr());
     if (!(expression instanceof FloatExpression)) {
       const token = ctx.ID().symbol;
       this.errors.push({
@@ -139,7 +140,7 @@ export class HybridSystemLismaListener extends LismaListener {
   };
 
   exitAlgDef = (ctx: AlgDefContext) => {
-    const expression = this.getExpression(ctx.expr());
+    const expression = this.getExpression(ctx, ctx => ctx.expr());
     if (!(expression instanceof FloatExpression)) {
       const token = ctx.ID().symbol;
       this.errors.push({
@@ -156,7 +157,7 @@ export class HybridSystemLismaListener extends LismaListener {
   };
 
   exitTransition = (ctx: TransitionContext) => {
-    const predicate = this.getExpression(ctx.expr());
+    const predicate = this.getExpression(ctx, ctx => ctx.expr());
     if (!(predicate instanceof BooleanExpression)) {
       const token = ctx.LPAREN().symbol;
       this.errors.push({
@@ -175,7 +176,7 @@ export class HybridSystemLismaListener extends LismaListener {
   };
 
   exitConstDef = (ctx: ConstDefContext) => {
-    const expression = this.getExpression(ctx.expr());
+    const expression = this.getExpression(ctx, ctx => ctx.expr());
     if (!(expression instanceof FloatExpression)) {
       const token = ctx.ID().symbol;
       this.errors.push({
@@ -192,7 +193,7 @@ export class HybridSystemLismaListener extends LismaListener {
   };
 
   exitInitCond = (ctx: InitCondContext) => {
-    const expression = this.getExpression(ctx.expr());
+    const expression = this.getExpression(ctx, ctx => ctx.expr());
     if (!(expression instanceof FloatExpression)) {
       const token = ctx._eq;
       this.errors.push({
@@ -206,7 +207,7 @@ export class HybridSystemLismaListener extends LismaListener {
   };
 
   exitWhenStatement = (ctx: WhenStatementContext) => {
-    const predicate = this.getExpression(ctx.expr());
+    const predicate = this.getExpression(ctx, ctx => ctx.expr());
     if (!(predicate instanceof BooleanExpression)) {
       this.errors.push({
         message: 'expression for "when" statement must be of boolean type',
@@ -227,8 +228,20 @@ export class HybridSystemLismaListener extends LismaListener {
     this.algStack = [];
   };
 
-  private getExpression(ctx: ExprContext): Expression {
-    const expression = this.exprVisitor.visit(ctx);
+  private getExpression<T extends ParserRuleContext>(
+    ctx: T,
+    expressionExtractor: (ctx: T) => ExprContext | undefined
+  ): Expression {
+    const exprCtx = expressionExtractor(ctx);
+    if (!exprCtx) {
+      return new DeadEndExpression({
+        message:
+          'Could not get expression context. Probably there are lex or syntax errors',
+        charPosition: ctx.start.start,
+        line: ctx.start.line,
+      });
+    }
+    const expression = this.exprVisitor.visit(exprCtx);
     if (expression instanceof DeadEndExpression) {
       this.errors.push(expression.error);
     }
