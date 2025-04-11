@@ -42,20 +42,18 @@ const compile = (
   source: string,
   config: CompileConfig = {},
   ruleExtractor: (parser: LismaParser) => ParseTree = parser => parser.prog()
-) => {
+): ParseTree => {
   const chars = new CharStream(source);
   const lexer = new LismaLexer(chars);
 
-  const { lexerErrorListener } = config;
+  const { lexerErrorListener, parserErrorListener } = config;
   if (lexerErrorListener) {
     lexer.removeErrorListeners();
     lexer.addErrorListener(lexerErrorListener);
   }
 
   const tokens = new CommonTokenStream(lexer);
-
   const parser = new LismaParser(tokens);
-  const { parserErrorListener } = config;
   if (parserErrorListener) {
     parser.removeErrorListeners();
     parser.addErrorListener(parserErrorListener);
