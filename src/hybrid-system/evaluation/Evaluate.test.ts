@@ -32,7 +32,7 @@ describe('Evaluate', () => {
     console.log(target);
   });
 
-  it('should work with when statement', async () => {
+  it('should work with "when" statement', async () => {
     const hs = new HybridSystemLismaListener();
     const code = `
     state shared {
@@ -55,6 +55,35 @@ describe('Evaluate', () => {
     );
     await fs.mkdir('./out', { recursive: true });
     await fs.writeFile('./out/when_test.json', JSON.stringify(result, null, 4));
+  });
+
+  it('should work with "if" statement', async () => {
+    const hs = new HybridSystemLismaListener();
+    const code = `
+    state shared {
+      body {
+          x' = 4;
+          y = 2 * time;
+      }
+    };
+    if (y > 4 && y < 5) {
+        x' = -2;
+    }
+    if (x > 2 && x < 5) {
+        y = -2 * time;
+    }
+    `;
+    walkOnText(hs, code);
+
+    const system = hs.getSystem();
+    const result = evaluateHybridSystem(
+      system,
+      new RungeKutta2Integrator(0.001),
+      0,
+      10
+    );
+    await fs.mkdir('./out', { recursive: true });
+    await fs.writeFile('./out/if_test.json', JSON.stringify(result, null, 4));
   });
 
   it('should evaluate ball', async () => {

@@ -3,11 +3,10 @@ import { IntegrationStep } from '../../integration/types/IntegrationStep';
 import { DerivativeSystem } from '../../integration/types/DerivativeSystem';
 import { Variable } from '../types/Variable';
 import { HybridSystem } from '../types/HybridSystem';
-import { State } from '../types/State';
 import { EquationSystem } from './types/EquationSystem';
 import { EvaluationStep, VariableValue } from './types/EvaluationStep';
 import { TransitionController } from './TransitionController';
-import { WhenStatementProcessor as WhenClauseProcessor } from './WhenClausetProcessor';
+import { WhenStatementProcessor as WhenClauseProcessor } from './WhenClauseProcessor';
 
 const evaluateHybridSystem = (
   hybridSystem: HybridSystem,
@@ -73,40 +72,69 @@ const hybridSystemValuesProvider = (
 };
 
 const mapHsToDs = (hs: HybridSystem): DerivativeSystem => {
-  const sharedDiffMapMap = stateToDiffMap(hs.sharedState);
+  const sharedDiffMapMap = groupVariablesByNames(hs.sharedState.diffVariables);
   const statesDiffMaps = new Map(
-    hs.states.map(state => [state.name, stateToDiffMap(state)])
+    hs.states.map(state => [
+      state.name,
+      groupVariablesByNames(state.diffVariables),
+    ])
   );
   return () => {
     const { activeState } = hs;
     const activeStateDiffMap = statesDiffMaps.get(activeState.name)!;
+    const compositeMap = new Map([...sharedDiffMapMap, ...activeStateDiffMap]);
+    hs.ifClauses
+      .filter(clause => clause.predicate.evaluate())
+      .map(clause => groupVariablesByNames(clause.diffVariables))
+      .forEach(clauseMap => {
+        for (const [name, variable] of clauseMap) {
+          compositeMap.set(name, variable);
+        }
+      });
     const diffVariables = hs.diffVariableNames.map(
-      diffName =>
-        activeStateDiffMap.get(diffName) ?? sharedDiffMapMap.get(diffName)!
+      diffName => compositeMap.get(diffName)!
     );
     return diffVariables.map(d => d.expression.evaluate());
   };
 };
 
+const groupVariablesByNames = (variables: Variable[]) =>
+  new Map(variables.map(variable => [variable.name, variable]));
+
 const mapHsToEqs = (hs: HybridSystem): EquationSystem => {
-  const sharedAlgMap = stateToAlgMap(hs.sharedState);
+  const sharedAlgMap = groupVariablesByNames(hs.sharedState.algVariables);
   const stateAlgMaps = new Map(
-    hs.states.map(state => [state.name, stateToAlgMap(state)])
+    hs.states.map(state => [
+      state.name,
+      groupVariablesByNames(state.algVariables),
+    ])
   );
   return () => {
     const { activeState } = hs;
     const activeStateAlgMap = stateAlgMaps.get(activeState.name)!;
+    const compositeMap = new Map([...sharedAlgMap, ...activeStateAlgMap]);
     const algVariables = hs.algVariableNames.map(
-      algName => activeStateAlgMap.get(algName) ?? sharedAlgMap.get(algName)!
+      algName => compositeMap.get(algName)!
     );
-    return algVariables.map(a => a.expression.evaluate());
+    const values = algVariables.map(a => a.expression.evaluate());
+    hs.algVariableNames.forEach((alg, index) => {
+      hs.table.set(alg, values[index]);
+    });
+    const ifMap = hs.ifClauses
+      .filter(clause => clause.predicate.evaluate())
+      .map(clause => groupVariablesByNames(clause.algVariables))
+      .reduce(
+        (prev, current) => new Map([...prev, ...current]),
+        new Map<string, Variable>()
+      );
+    hs.algVariableNames.forEach((alg, index) => {
+      const ifVariable = ifMap.get(alg);
+      if (ifVariable !== undefined) {
+        values[index] = ifVariable.expression.evaluate();
+      }
+    });
+    return values;
   };
 };
-
-const stateToDiffMap = (state: State): Map<string, Variable> =>
-  new Map(state.diffVariables.map(diff => [diff.name, diff]));
-
-const stateToAlgMap = (state: State): Map<string, Variable> =>
-  new Map(state.algVariables.map(alg => [alg.name, alg]));
 
 export { evaluateHybridSystem };

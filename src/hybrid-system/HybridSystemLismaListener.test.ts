@@ -8,7 +8,7 @@ import { HybridSystemLismaListener } from './HybridSystemLismaListener';
 
 describe('HybridSystemLismaListener', () => {
   it('should work', () => {
-    const hs = new HybridSystemLismaListener();
+    const hsListener = new HybridSystemLismaListener();
     const code = `
     const tau = 0.1;
     const phi = 3 + tau;
@@ -23,12 +23,12 @@ describe('HybridSystemLismaListener', () => {
     } from b on (1 < 2), from c, d on (3 <= 4);
     y(t0) = 4;
     `;
-    walkOnText(hs, code);
+    walkOnText(hsListener, code);
 
-    const system = hs.getSystem();
+    const system = hsListener.getSystem();
     const { states } = system;
 
-    expect(hs.getSemanticErrors().length).toBe(0);
+    expect(hsListener.getSemanticErrors().length).toBe(0);
 
     expect(states.length).toBe(2);
     const state = states[1];
@@ -74,139 +74,8 @@ describe('HybridSystemLismaListener', () => {
     expect(algVariableNames).toStrictEqual(['z']);
   });
 
-  it('should find not boolean transition expressions', () => {
-    const hs = new HybridSystemLismaListener();
-    const code = `
-    state a {
-    } from b on (1);
-    `;
-    walkOnText(hs, code);
-
-    const errors = hs.getSemanticErrors();
-
-    expect(errors.length).toBe(1);
-    console.log(errors);
-  });
-
-  it('should parse predicate expr', () => {
-    const hs = new HybridSystemLismaListener();
-    const code = `
-    state a {
-    } from b on (1 >= 2);
-    `;
-
-    walkOnText(hs, code);
-
-    const system = hs.getSystem();
-    const state = system.states[0];
-    const transition = state.transitions[0];
-    const { predicate } = transition;
-    expect(predicate).toBeInstanceOf(BinaryBooleanExpression);
-    expect(String(predicate)).toBe('1 2 >=');
-    expect((predicate as BinaryBooleanExpression).evaluate()).toBe(false);
-  });
-
-  it('should parse simple float expr', () => {
-    const hs = new HybridSystemLismaListener();
-    const code = `
-    state a {
-      body {
-          x' = 3 + 4;
-      }
-    } from b on (1 >= 2);
-    `;
-
-    walkOnText(hs, code);
-
-    const system = hs.getSystem();
-    const x = system.states[0].diffVariables[0];
-    expect(x.expression).toBeInstanceOf(BinaryFloatExpression);
-    expect(String(x.expression)).toBe('3 4 +');
-    expect((x.expression as FloatExpression).evaluate()).toBe(7);
-  });
-
-  it('should evaluate ids in expressions', () => {
-    const hs = new HybridSystemLismaListener();
-    const code = `
-    const phi = 3;
-    state a {
-      body {
-          x' = 3 + phi;
-      }
-    } from b on (1 >= 2);
-    `;
-
-    walkOnText(hs, code);
-
-    const system = hs.getSystem();
-    const x = system.states[0].diffVariables[0].expression as FloatExpression;
-    expect(x.evaluate()).toBe(6);
-  });
-
-  it('should evaluate initial conditions', () => {
-    const hs = new HybridSystemLismaListener();
-    const code = `
-    state a {
-      body {
-          x' = 4;
-      }
-    } from b on (1 >= 2);
-    x(t0) = 5;
-    `;
-
-    walkOnText(hs, code);
-
-    const system = hs.getSystem();
-    expect(system.table.get('x')).toBe(5);
-  });
-
-  it('should evaluate on exit expressions', () => {
-    const hs = new HybridSystemLismaListener();
-    const code = `
-    state a {
-      body {
-          x' = 4;
-      }
-      onEnter {
-          x = 10;
-      }
-    } from b on (1 >= 2);
-    `;
-
-    walkOnText(hs, code);
-
-    const system = hs.getSystem();
-    expect(system.states[0].onEnterStatements.length).toBe(1);
-    const onEnter = system.states[0].onEnterStatements[0];
-    expect(onEnter).toBeInstanceOf(AssignStatement);
-    (onEnter as AssignStatement).execute();
-    expect(system.table.get('x')).toBe(10);
-  });
-
-  it('should parse when statements', () => {
-    const hs = new HybridSystemLismaListener();
-    const code = `
-      state shared {
-          body {
-              x' = 2;
-          }
-      };
-      when (x >= 3) {
-          x = 0;
-      }
-        `;
-    walkOnText(hs, code);
-
-    const system = hs.getSystem();
-    expect(system.states.length).toBe(1);
-
-    expect(system.whenClauses.length).toBe(1);
-    const [whenClause] = system.whenClauses;
-    expect(String(whenClause.predicate)).toBe('x 3 >=');
-  });
-
   it('should not fail on lex or syntax errors', () => {
-    const hs = new HybridSystemLismaListener();
+    const hsListener = new HybridSystemLismaListener();
     const code = `
       state {
           body {
@@ -220,12 +89,166 @@ describe('HybridSystemLismaListener', () => {
     const lexErrorListener = new LismaErrorListener<number>();
     const syntaxErrorListener = new LismaErrorListener<Token>();
 
-    walkOnText(hs, code, {
+    walkOnText(hsListener, code, {
       lexerErrorListener: lexErrorListener,
       parserErrorListener: syntaxErrorListener,
     });
 
     expect(lexErrorListener.errors.length).toBeGreaterThan(0);
     expect(syntaxErrorListener.errors.length).toBeGreaterThan(0);
+  });
+
+  it('should find not boolean transition expressions', () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+    state a {
+    } from b on (1);
+    `;
+    walkOnText(hsListener, code);
+
+    const errors = hsListener.getSemanticErrors();
+
+    expect(errors.length).toBe(1);
+    console.log(errors);
+  });
+
+  it('should parse predicate expr', () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+    state a {
+    } from b on (1 >= 2);
+    `;
+
+    walkOnText(hsListener, code);
+
+    const system = hsListener.getSystem();
+    const state = system.states[0];
+    const transition = state.transitions[0];
+    const { predicate } = transition;
+    expect(predicate).toBeInstanceOf(BinaryBooleanExpression);
+    expect(String(predicate)).toBe('1 2 >=');
+    expect((predicate as BinaryBooleanExpression).evaluate()).toBe(false);
+  });
+
+  it('should parse simple float expr', () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+    state a {
+      body {
+          x' = 3 + 4;
+      }
+    } from b on (1 >= 2);
+    `;
+
+    walkOnText(hsListener, code);
+
+    const system = hsListener.getSystem();
+    const x = system.states[0].diffVariables[0];
+    expect(x.expression).toBeInstanceOf(BinaryFloatExpression);
+    expect(String(x.expression)).toBe('3 4 +');
+    expect((x.expression as FloatExpression).evaluate()).toBe(7);
+  });
+
+  it('should evaluate ids in expressions', () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+    const phi = 3;
+    state a {
+      body {
+          x' = 3 + phi;
+      }
+    } from b on (1 >= 2);
+    `;
+
+    walkOnText(hsListener, code);
+
+    const system = hsListener.getSystem();
+    const x = system.states[0].diffVariables[0].expression as FloatExpression;
+    expect(x.evaluate()).toBe(6);
+  });
+
+  it('should evaluate initial conditions', () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+    state a {
+      body {
+          x' = 4;
+      }
+    } from b on (1 >= 2);
+    x(t0) = 5;
+    `;
+
+    walkOnText(hsListener, code);
+
+    const system = hsListener.getSystem();
+    expect(system.table.get('x')).toBe(5);
+  });
+
+  it('should evaluate on exit expressions', () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+    state a {
+      body {
+          x' = 4;
+      }
+      onEnter {
+          x = 10;
+      }
+    } from b on (1 >= 2);
+    `;
+
+    walkOnText(hsListener, code);
+
+    const system = hsListener.getSystem();
+    expect(system.states[0].onEnterStatements.length).toBe(1);
+    const onEnter = system.states[0].onEnterStatements[0];
+    expect(onEnter).toBeInstanceOf(AssignStatement);
+    (onEnter as AssignStatement).execute();
+    expect(system.table.get('x')).toBe(10);
+  });
+
+  it('should parse when statements', () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+      state shared {
+          body {
+              x' = 2;
+          }
+      };
+      when (x >= 3) {
+          x = 0;
+      }
+        `;
+    walkOnText(hsListener, code);
+
+    const system = hsListener.getSystem();
+    expect(system.states.length).toBe(1);
+
+    expect(system.whenClauses.length).toBe(1);
+    const [whenClause] = system.whenClauses;
+    expect(String(whenClause.predicate)).toBe('x 3 >=');
+  });
+
+  it('should parse "if" statement', () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+      state shared {
+          body {
+              x' = 2;
+          }
+      };
+      if (x > 2) {
+          x' = -2;
+      }
+        `;
+    walkOnText(hsListener, code);
+    const system = hsListener.getSystem();
+
+    expect(system.ifClauses.length).toBe(1);
+    const [ifClause] = system.ifClauses;
+    expect(String(ifClause.predicate)).toBe('x 2 >');
+    const [diff] = ifClause.diffVariables;
+    expect(diff.name).toBe('x');
+    expect(String(diff.expression)).toBe('-2');
   });
 });

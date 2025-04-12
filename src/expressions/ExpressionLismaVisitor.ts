@@ -1,4 +1,3 @@
-import { ParserRuleContext } from 'antlr4';
 import {
   AtomExprContext,
   BinaryExprContext,
@@ -15,8 +14,8 @@ import { FloatExpression } from './float/FloatExpression';
 import { FloatConstExpression } from './float/FloatConstExpression';
 import { FloatUnaryExpression } from './float/FloatUnaryExpression';
 import { FloatVariableExpression } from './float/FloatVariableExpression';
-import { LismaError } from '../types/LismaError';
 import { FloatFunctionCallExpression } from './float/FloatFunctionCallExpression';
+import { errorFromRuleContext } from './util';
 
 export class ExpressionLismaVisitor extends LismaVisitor<Expression> {
   constructor(private readonly variableTable: Map<string, number> = new Map()) {
@@ -83,12 +82,3 @@ export class ExpressionLismaVisitor extends LismaVisitor<Expression> {
     );
   };
 }
-
-const errorFromRuleContext = (
-  ctx: ParserRuleContext,
-  message: string
-): LismaError => ({
-  message: message,
-  charPosition: ctx.start.start,
-  line: ctx.start.line,
-});

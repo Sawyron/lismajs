@@ -1,6 +1,7 @@
 import { HybridSystemLismaListener } from './HybridSystemLismaListener';
 import { Constant } from './types/Constant';
 import { HybridSystem } from './types/HybridSystem';
+import { IfClause } from './types/IfClause';
 import { InitialCondition } from './types/InitialCondition';
 import { State } from './types/State';
 import { Transition } from './types/Transition';
@@ -16,4 +17,5 @@ export {
   Transition,
   Variable,
   WhenClause,
+  IfClause,
 };
