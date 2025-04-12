@@ -88,7 +88,7 @@ export class HybridSystemLismaListener extends LismaListener {
   }
 
   public getSemanticErrors(): LismaError[] {
-    return [...this.errors];
+    return [...this.exprVisitor.errors, ...this.errors];
   }
 
   enterState = (ctx: StateContext) => {

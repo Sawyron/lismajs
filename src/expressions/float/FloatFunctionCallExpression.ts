@@ -18,6 +18,39 @@ const buildInFunctions = new Map<
     }
     return Math.abs(argument.evaluate());
   });
+  buildInFunctions.set('pow', args => {
+    if (args.length !== 2) {
+      throw new Error('Invalid number of arguments');
+    }
+    const [target, power] = args;
+    if (
+      !(target instanceof FloatExpression) ||
+      !(power instanceof FloatExpression)
+    ) {
+      throw new Error('Invalid types of arguments');
+    }
+    return Math.pow(target.evaluate(), power.evaluate());
+  });
+  buildInFunctions.set('exp', args => {
+    if (args.length !== 1) {
+      throw new Error('Invalid number of arguments');
+    }
+    const [target] = args;
+    if (!(target instanceof FloatExpression)) {
+      throw new Error('Invalid types of arguments');
+    }
+    return Math.exp(target.evaluate());
+  });
+  buildInFunctions.set('sqrt', args => {
+    if (args.length !== 1) {
+      throw new Error('Invalid number of arguments');
+    }
+    const [target] = args;
+    if (!(target instanceof FloatExpression)) {
+      throw new Error('Invalid types of arguments');
+    }
+    return Math.sqrt(target.evaluate());
+  });
 }
 
 export class FloatFunctionCallExpression extends FloatExpression {

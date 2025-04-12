@@ -56,5 +56,7 @@ RPAREN: ')';
 LBRACKET: '{';
 RBRACKET: '}';
 DELIMITER: ';';
-NUMBER: SIGN? [0-9]+ ('.' [0-9]+)?;
+NUMBER:
+	SIGN? [0-9]+ ('.' [0-9]+)?
+	| SIGN? [0-9]'.' [0-9]+ 'E' SIGN [0-9];
 FORMAT: [\r\n\t ]+ -> skip;

@@ -11,7 +11,7 @@ export class FloatVariableExpression extends FloatExpression {
   public evaluate(): number {
     const value = this.variableTable.get(this.id);
     if (value === undefined) {
-      throw new Error();
+      throw new Error(`Could not find value for '${this.id}'`);
     }
     return value;
   }

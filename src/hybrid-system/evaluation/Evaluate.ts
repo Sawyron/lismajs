@@ -113,13 +113,9 @@ const mapHsToEqs = (hs: HybridSystem): EquationSystem => {
     const { activeState } = hs;
     const activeStateAlgMap = stateAlgMaps.get(activeState.name)!;
     const compositeMap = new Map([...sharedAlgMap, ...activeStateAlgMap]);
-    const algVariables = hs.algVariableNames.map(
-      algName => compositeMap.get(algName)!
+    hs.algVariableNames.forEach(alg =>
+      hs.table.set(alg, compositeMap.get(alg)!.expression.evaluate())
     );
-    const values = algVariables.map(a => a.expression.evaluate());
-    hs.algVariableNames.forEach((alg, index) => {
-      hs.table.set(alg, values[index]);
-    });
     const ifMap = hs.ifClauses
       .filter(clause => clause.predicate.evaluate())
       .map(clause => groupVariablesByNames(clause.algVariables))
@@ -127,13 +123,14 @@ const mapHsToEqs = (hs: HybridSystem): EquationSystem => {
         (prev, current) => new Map([...prev, ...current]),
         new Map<string, Variable>()
       );
-    hs.algVariableNames.forEach((alg, index) => {
-      const ifVariable = ifMap.get(alg);
-      if (ifVariable !== undefined) {
-        values[index] = ifVariable.expression.evaluate();
-      }
+    for (const [name, variable] of ifMap) {
+      compositeMap.set(name, variable);
+    }
+    return hs.algVariableNames.map(alg => {
+      const value = compositeMap.get(alg)!.expression.evaluate();
+      hs.table.set(alg, value);
+      return value;
     });
-    return values;
   };
 };
 

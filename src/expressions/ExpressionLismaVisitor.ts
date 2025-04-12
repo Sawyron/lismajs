@@ -16,8 +16,15 @@ import { FloatUnaryExpression } from './float/FloatUnaryExpression';
 import { FloatVariableExpression } from './float/FloatVariableExpression';
 import { FloatFunctionCallExpression } from './float/FloatFunctionCallExpression';
 import { errorFromRuleContext } from './util';
+import { LismaError } from '../types/LismaError';
 
 export class ExpressionLismaVisitor extends LismaVisitor<Expression> {
+  private _errors: LismaError[] = [];
+
+  public get errors(): LismaError[] {
+    return [...this._errors];
+  }
+
   constructor(private readonly variableTable: Map<string, number> = new Map()) {
     super();
   }
@@ -31,9 +38,9 @@ export class ExpressionLismaVisitor extends LismaVisitor<Expression> {
     if (BinaryBooleanExpression.operations.has(operation)) {
       return new BinaryBooleanExpression(left, right, operation);
     }
-    return new DeadEndExpression(
-      errorFromRuleContext(ctx, 'Unreachable state')
-    );
+    const error = errorFromRuleContext(ctx, 'Unreachable state');
+    this._errors.push(error);
+    return new DeadEndExpression(error);
   };
 
   visitUnaryExpr = (ctx: UnaryExprContext): Expression => {
@@ -47,9 +54,9 @@ export class ExpressionLismaVisitor extends LismaVisitor<Expression> {
       }
       return new FloatUnaryExpression(expr, operation);
     }
-    return new DeadEndExpression(
-      errorFromRuleContext(ctx, 'Unreachable state')
-    );
+    const error = errorFromRuleContext(ctx, 'Unreachable state');
+    this._errors.push(error);
+    return new DeadEndExpression(error);
   };
 
   visitCallExpr = (ctx: CallExprContext): Expression => {
@@ -58,9 +65,9 @@ export class ExpressionLismaVisitor extends LismaVisitor<Expression> {
     if (FloatFunctionCallExpression.buildInFunctionNames.has(id)) {
       return new FloatFunctionCallExpression(id, callArguments);
     }
-    return new DeadEndExpression(
-      errorFromRuleContext(ctx, 'Undefined function')
-    );
+    const error = errorFromRuleContext(ctx, `Undefined function '${id}'`);
+    this._errors.push(error);
+    return new DeadEndExpression(error);
   };
 
   visitParenExpr = (ctx: ParenExprContext): Expression => {
@@ -77,8 +84,8 @@ export class ExpressionLismaVisitor extends LismaVisitor<Expression> {
         this.variableTable
       );
     }
-    return new DeadEndExpression(
-      errorFromRuleContext(ctx, 'Unreachable state')
-    );
+    const error = errorFromRuleContext(ctx, 'Unreachable state');
+    this._errors.push(error);
+    return new DeadEndExpression(error);
   };
 }

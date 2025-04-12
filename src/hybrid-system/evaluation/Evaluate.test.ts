@@ -1,13 +1,14 @@
-import { walkOnText } from '../..';
+import { LismaErrorListener, walkOnText } from '../..';
 import { evaluateHybridSystem } from './Evaluate';
 import { HybridSystemLismaListener } from '../HybridSystemLismaListener';
 import EulerIntegrator from '../../integration/EulerIntegrator';
 import fs from 'fs/promises';
 import RungeKutta2Integrator from '../../integration/RungeKutta2Integrator';
+import { Token } from 'antlr4';
 
 describe('Evaluate', () => {
   it('should work', () => {
-    const hs = new HybridSystemLismaListener();
+    const hsListener = new HybridSystemLismaListener();
     const code = `
     state shared {
       body {
@@ -18,9 +19,9 @@ describe('Evaluate', () => {
       }
     } from b on (1 >= 2);
     `;
-    walkOnText(hs, code);
+    walkOnText(hsListener, code);
 
-    const system = hs.getSystem();
+    const system = hsListener.getSystem();
     const result = evaluateHybridSystem(
       system,
       new EulerIntegrator(0.001),
@@ -33,7 +34,7 @@ describe('Evaluate', () => {
   });
 
   it('should work with "when" statement', async () => {
-    const hs = new HybridSystemLismaListener();
+    const hsListener = new HybridSystemLismaListener();
     const code = `
     state shared {
       body {
@@ -44,9 +45,9 @@ describe('Evaluate', () => {
         x = 0;
     }
     `;
-    walkOnText(hs, code);
+    walkOnText(hsListener, code);
 
-    const system = hs.getSystem();
+    const system = hsListener.getSystem();
     const result = evaluateHybridSystem(
       system,
       new EulerIntegrator(0.001),
@@ -58,7 +59,7 @@ describe('Evaluate', () => {
   });
 
   it('should work with "if" statement', async () => {
-    const hs = new HybridSystemLismaListener();
+    const hsListener = new HybridSystemLismaListener();
     const code = `
     state shared {
       body {
@@ -73,9 +74,9 @@ describe('Evaluate', () => {
         y = -2 * time;
     }
     `;
-    walkOnText(hs, code);
+    walkOnText(hsListener, code);
 
-    const system = hs.getSystem();
+    const system = hsListener.getSystem();
     const result = evaluateHybridSystem(
       system,
       new RungeKutta2Integrator(0.001),
@@ -86,8 +87,31 @@ describe('Evaluate', () => {
     await fs.writeFile('./out/if_test.json', JSON.stringify(result, null, 4));
   });
 
+  it('should evaluate functions', async () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+    state shared {
+      body {
+          e = exp(time);
+          s = sqrt(time);
+      }
+    };
+    `;
+    walkOnText(hsListener, code);
+
+    const system = hsListener.getSystem();
+    const result = evaluateHybridSystem(
+      system,
+      new RungeKutta2Integrator(0.001),
+      0,
+      10
+    );
+    await fs.mkdir('./out', { recursive: true });
+    await fs.writeFile('./out/functions.json', JSON.stringify(result, null, 4));
+  });
+
   it('should evaluate ball', async () => {
-    const hs = new HybridSystemLismaListener();
+    const hsListener = new HybridSystemLismaListener();
     const code = `
     const g = 9.81;
     y(t0) = 10;
@@ -112,9 +136,9 @@ describe('Evaluate', () => {
         }
     } from shared, up on (v < 0);
     `;
-    walkOnText(hs, code);
+    walkOnText(hsListener, code);
 
-    const system = hs.getSystem();
+    const system = hsListener.getSystem();
     const result = evaluateHybridSystem(
       system,
       new EulerIntegrator(0.001),
@@ -127,7 +151,7 @@ describe('Evaluate', () => {
   });
 
   it('should evaluate masses', async () => {
-    const hs = new HybridSystemLismaListener();
+    const hsListener = new HybridSystemLismaListener();
     const code = `
     const k1 = 1;
     const n1 = 1;
@@ -185,9 +209,9 @@ describe('Evaluate', () => {
         }
     } from shared, separate on (x1 > =x2 && v1 >= v2);
     `;
-    walkOnText(hs, code);
+    walkOnText(hsListener, code);
 
-    const system = hs.getSystem();
+    const system = hsListener.getSystem();
     const result = evaluateHybridSystem(
       system,
       new RungeKutta2Integrator(0.001),
@@ -197,5 +221,123 @@ describe('Evaluate', () => {
 
     await fs.mkdir('./out', { recursive: true });
     await fs.writeFile('./out/masses.json', JSON.stringify(result, null, 4));
+  });
+
+  it('should evaluate tanks', async () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+    const pi = 3.141592653589793;
+    const H = 0.39;
+    const d1 = 0.12; 
+    const d2 = 0.05; 
+    const TIME1 = 60; 
+    const TIME2 = 85;
+
+    const L_plus = 0.9;
+    const L_minus = 0.3;
+
+    state shared {
+        body {
+            VInput = 1.11111E-4;
+            p1'=0;
+            p2'=0;
+
+            L1 = 0;
+            L2 = 0;
+            B = 0;
+
+            S1 = pi*pow(d1, 2)/4;
+            S2 = pi*pow(d2, 2)/4;
+            K1 = 0.000185*exp(-0.000006*pow(p1, 3))*L1;
+            K2 = 0.000226*exp(-0.0000057*pow(p2, 3))*L2;
+            V12 = K1*sqrt(h1-(h2-H)*B);
+            Vout = K2*sqrt(h2);
+            
+
+            h1'= (VInput - V12)/S1;
+            h2'= (V12 - Vout)/S2;
+            st = 0;
+        }
+    };
+    p1(t0)= 80; 
+    p2(t0)= 80;
+
+    if (h2 >  H) { B = 1; }
+    if (h2 <= H) { B = 0; }
+    if (p1 <  80) { L1 = 1; }
+    if (p1 >= 80) { L1 = 0; }
+    if (p2 <  80) { L2 = 1; }
+    if (p2 >= 80) { L2 = 0; }
+
+    when (p1 < 0) { p1=0.1; }
+    if (p1 < 0) { p1'=0; }
+    when (p2 < 0) { p2=0.1; }
+    if (p2 < 0) { p2'=0; }
+
+    state V12closed {
+      body {
+          p1'= 0;
+          st = 1;
+      }
+    } from shared on (time > 0);
+
+    state V12open  {
+      body {
+          p1'= -1;
+          st = 2;
+      }
+    } from V12closed on (time > TIME1);
+
+    state VoutOpen {
+      body {
+          p1'= -1;
+          p2'= -1;
+          st = 3;
+      }
+    } from V12open on (time > TIME2);
+
+    state full {
+      body {
+          p1'= -1;
+          p2'= -1;
+          st = 4;
+      }
+    } from VoutOpen, empty on (h2 >= L_plus);
+
+    state empty {
+      body {
+          p1'= -1;
+          p2'= 1;
+          st = 5;
+      }
+    } from full on (h2 <= L_minus);
+    `;
+    const lexErr = new LismaErrorListener<number>();
+    const syntaxErr = new LismaErrorListener<Token>();
+    walkOnText(hsListener, code, {
+      lexerErrorListener: lexErr,
+      parserErrorListener: syntaxErr,
+    });
+    if (lexErr.errors.length > 0) {
+      console.error(lexErr.errors);
+    }
+    if (syntaxErr.errors.length > 0) {
+      console.error(syntaxErr.errors);
+    }
+    const semErrors = hsListener.getSemanticErrors();
+    if (semErrors.length > 0) {
+      console.error(semErrors);
+    }
+
+    const system = hsListener.getSystem();
+
+    const result = evaluateHybridSystem(
+      system,
+      new EulerIntegrator(0.1),
+      0,
+      1000
+    );
+    await fs.mkdir('./out', { recursive: true });
+    await fs.writeFile('./out/tanks.json', JSON.stringify(result, null, 4));
   });
 });
