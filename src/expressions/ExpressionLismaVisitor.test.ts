@@ -6,7 +6,7 @@ import { ConstFloatExpression } from './float/ConstConstExpression';
 import { FloatExpression } from './float/FloatExpression';
 import { FunctionCallFloatExpression } from './float/FunctionCallFloatExpression';
 import { VariableFloatExpression } from './float/VariableVariableExpression';
-import { FunctionCallExpressionEvaluator } from './FunctionCallExpressionEvaluator';
+import { describe, it, expect } from '@jest/globals';
 
 describe('ExpressionLismaVisitor', () => {
   it('should parse atom value expr', () => {

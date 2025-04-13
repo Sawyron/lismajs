@@ -5,6 +5,7 @@ import EulerIntegrator from '../../integration/EulerIntegrator';
 import fs from 'fs/promises';
 import RungeKutta2Integrator from '../../integration/RungeKutta2Integrator';
 import { Token } from 'antlr4';
+import { describe, it } from '@jest/globals';
 
 describe('Evaluate', () => {
   it('should work', () => {
