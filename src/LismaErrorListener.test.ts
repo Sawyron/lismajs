@@ -1,6 +1,7 @@
 import { Token } from 'antlr4';
 import { LismaErrorListener, walkOnText } from '.';
 import LismaListener from './gen/LismaListener';
+import { describe, expect, it } from '@jest/globals';
 
 describe('LismaErrorListener', () => {
   it('should find lex errors', () => {
