@@ -48,12 +48,11 @@ const topologicallySortEquations = (
       ])
   );
 
-  const errors: string[] = [];
-  for (const [id, dependencies] of dependencyGraph) {
-    if (dependencies.has(id)) {
-      errors.push(id);
-    }
-  }
+  const errors: string[] = dependencyGraph
+    .entries()
+    .filter(([id, dependencies]) => dependencies.has(id))
+    .map(entry => entry[0])
+    .toArray();
   if (errors.length > 0) {
     return [[], errors];
   }
@@ -61,8 +60,8 @@ const topologicallySortEquations = (
     .values()
     .reduce((previous, current) => previous.union(current), new Set())
     .forEach(id => {
-      for (const deps of dependencyGraph.values()) {
-        if (!idToExpression.has(id)) {
+      if (!idToExpression.has(id)) {
+        for (const deps of dependencyGraph.values()) {
           deps.delete(id);
         }
       }
