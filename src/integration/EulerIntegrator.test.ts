@@ -1,6 +1,7 @@
 import EulerIntegrator from './EulerIntegrator';
 import { DerivativeSystem } from './types/DerivativeSystem';
 import { solveOdeSystem } from './solve';
+import { describe, it } from '@jest/globals';
 
 describe('EulerIntegrator', () => {
   it('should work', () => {

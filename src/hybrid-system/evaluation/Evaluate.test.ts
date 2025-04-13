@@ -208,7 +208,7 @@ describe('Evaluate', () => {
             v1 = (m1 * v1 + m2 * v2) / (m1 + m2);
             v2 = v1;
         }
-    } from shared, separate on (x1 > =x2 && v1 >= v2);
+    } from shared, separate on (x1 >= x2 && v1 >= v2);
     `;
     walkOnText(hsListener, code);
 

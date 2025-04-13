@@ -1,6 +1,7 @@
 import AdaptiveRungeKutta2Integrator from './AdaptiveRungeKutta2Integrator';
 import { DerivativeSystem } from './types/DerivativeSystem';
 import { solveOdeSystem } from './solve';
+import { describe, it } from '@jest/globals';
 
 describe('AdaptiveRungeKutta2Integrator', () => {
   it('should work', () => {
