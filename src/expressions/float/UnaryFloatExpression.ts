@@ -8,7 +8,7 @@ const operationMap = new Map<string, (expression: FloatExpression) => number>();
   });
 }
 
-export class FloatUnaryExpression extends FloatExpression {
+export class UnaryFloatExpression extends FloatExpression {
   static operations: ReadonlySet<string> = new Set(operationMap.keys());
 
   constructor(

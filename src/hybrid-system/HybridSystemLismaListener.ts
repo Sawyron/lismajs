@@ -19,7 +19,7 @@ import { State } from './types/State';
 import { Transition } from './types/Transition';
 import { Expression } from '../expressions/Expression';
 import { FloatExpression } from '../expressions/float/FloatExpression';
-import { FloatConstExpression } from '../expressions/float/FloatConstExpression';
+import { ConstFloatExpression } from '../expressions/float/ConstConstExpression';
 import { BooleanExpression } from '../expressions/boolean/BooleanExpression';
 import { AssignStatement } from '../statements/AssignStatement';
 import { ExpressionLismaVisitor } from '../expressions/ExpressionLismaVisitor';
@@ -53,7 +53,7 @@ export class HybridSystemLismaListener extends LismaListener {
       .flatMap(s => s.diffVariables)
       .forEach(diffVar => {
         if (!initials.has(diffVar.name)) {
-          initials.set(diffVar.name, new FloatConstExpression(0));
+          initials.set(diffVar.name, new ConstFloatExpression(0));
         }
       });
     for (const [name, expression] of initials) {

@@ -1,6 +1,6 @@
 import { FloatExpression } from './FloatExpression';
 
-export class FloatConstExpression extends FloatExpression {
+export class ConstFloatExpression extends FloatExpression {
   constructor(private readonly value: number) {
     super();
   }

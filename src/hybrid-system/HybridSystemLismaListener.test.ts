@@ -1,10 +1,10 @@
 import { Token } from 'antlr4';
 import { LismaErrorListener, walkOnText } from '..';
 import { BinaryBooleanExpression } from '../expressions/boolean/BinaryBooleanExpression';
-import { BinaryFloatExpression } from '../expressions/float/FloatBinaryExpression';
 import { FloatExpression } from '../expressions/float/FloatExpression';
 import { AssignStatement } from '../statements/AssignStatement';
 import { HybridSystemLismaListener } from './HybridSystemLismaListener';
+import { BinaryFloatExpression } from '../expressions';
 
 describe('HybridSystemLismaListener', () => {
   it('should work', () => {

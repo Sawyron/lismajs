@@ -1,11 +1,12 @@
 import { visitText } from '..';
 import { DeadEndExpression } from './DeadEndExpression';
 import { ExpressionLismaVisitor } from './ExpressionLismaVisitor';
-import { BinaryFloatExpression } from './float/FloatBinaryExpression';
-import { FloatConstExpression } from './float/FloatConstExpression';
+import { BinaryFloatExpression } from './float/BinaryFloatExpression';
+import { ConstFloatExpression } from './float/ConstConstExpression';
 import { FloatExpression } from './float/FloatExpression';
-import { FloatFunctionCallExpression } from './float/FloatFunctionCallExpression';
-import { FloatVariableExpression } from './float/FloatVariableExpression';
+import { FunctionCallFloatExpression } from './float/FunctionCallFloatExpression';
+import { VariableFloatExpression } from './float/VariableVariableExpression';
+import { FunctionCallExpressionEvaluator } from './FunctionCallExpressionEvaluator';
 
 describe('ExpressionLismaVisitor', () => {
   it('should parse atom value expr', () => {
@@ -13,8 +14,8 @@ describe('ExpressionLismaVisitor', () => {
     const visitor = new ExpressionLismaVisitor();
     const expression = visitText(visitor, code, {}, parser => parser.expr());
 
-    expect(expression).toBeInstanceOf(FloatConstExpression);
-    expect((expression as FloatConstExpression).evaluate()).toBe(50);
+    expect(expression).toBeInstanceOf(ConstFloatExpression);
+    expect((expression as ConstFloatExpression).evaluate()).toBe(50);
   });
 
   it('should parse atom id expr', () => {
@@ -23,8 +24,8 @@ describe('ExpressionLismaVisitor', () => {
     const visitor = new ExpressionLismaVisitor(table);
     const expression = visitText(visitor, code, {}, parser => parser.expr());
 
-    expect(expression).toBeInstanceOf(FloatVariableExpression);
-    expect((expression as FloatVariableExpression).evaluate()).toBe(10);
+    expect(expression).toBeInstanceOf(VariableFloatExpression);
+    expect((expression as VariableFloatExpression).evaluate()).toBe(10);
   });
 
   it('should parse bin expr', () => {
@@ -59,7 +60,7 @@ describe('ExpressionLismaVisitor', () => {
     const visitor = new ExpressionLismaVisitor();
     const expression = visitText(visitor, code, {}, parser => parser.expr());
 
-    expect(expression).toBeInstanceOf(FloatFunctionCallExpression);
+    expect(expression).toBeInstanceOf(FunctionCallFloatExpression);
     expect((expression as FloatExpression).evaluate()).toBe(3);
   });
 });

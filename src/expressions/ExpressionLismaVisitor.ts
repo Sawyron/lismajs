@@ -9,12 +9,12 @@ import LismaVisitor from '../gen/LismaVisitor';
 import { BinaryBooleanExpression } from './boolean/BinaryBooleanExpression';
 import { DeadEndExpression } from './DeadEndExpression';
 import { Expression } from './Expression';
-import { BinaryFloatExpression } from './float/FloatBinaryExpression';
+import { BinaryFloatExpression } from './float/BinaryFloatExpression';
 import { FloatExpression } from './float/FloatExpression';
-import { FloatConstExpression } from './float/FloatConstExpression';
-import { FloatUnaryExpression } from './float/FloatUnaryExpression';
-import { FloatVariableExpression } from './float/FloatVariableExpression';
-import { FloatFunctionCallExpression } from './float/FloatFunctionCallExpression';
+import { ConstFloatExpression } from './float/ConstConstExpression';
+import { UnaryFloatExpression } from './float/UnaryFloatExpression';
+import { VariableFloatExpression } from './float/VariableVariableExpression';
+import { FunctionCallFloatExpression } from './float/FunctionCallFloatExpression';
 import { errorFromRuleContext } from './util';
 import { LismaError } from '../types/LismaError';
 
@@ -45,14 +45,14 @@ export class ExpressionLismaVisitor extends LismaVisitor<Expression> {
 
   visitUnaryExpr = (ctx: UnaryExprContext): Expression => {
     const operation = ctx._luop.text;
-    if (FloatUnaryExpression.operations.has(operation)) {
+    if (UnaryFloatExpression.operations.has(operation)) {
       const expr = this.visit(ctx.expr());
       if (!(expr instanceof FloatExpression)) {
         return new DeadEndExpression(
           errorFromRuleContext(ctx, 'Can not apply unary operation')
         );
       }
-      return new FloatUnaryExpression(expr, operation);
+      return new UnaryFloatExpression(expr, operation);
     }
     const error = errorFromRuleContext(ctx, 'Unreachable state');
     this._errors.push(error);
@@ -62,8 +62,8 @@ export class ExpressionLismaVisitor extends LismaVisitor<Expression> {
   visitCallExpr = (ctx: CallExprContext): Expression => {
     const id = ctx.ID().getText();
     const callArguments = ctx.expr_list().map(expr => this.visit(expr));
-    if (FloatFunctionCallExpression.buildInFunctionNames.has(id)) {
-      return new FloatFunctionCallExpression(id, callArguments);
+    if (FunctionCallFloatExpression.buildInFunctionNames.has(id)) {
+      return new FunctionCallFloatExpression(id, callArguments);
     }
     const error = errorFromRuleContext(ctx, `Undefined function '${id}'`);
     this._errors.push(error);
@@ -76,10 +76,10 @@ export class ExpressionLismaVisitor extends LismaVisitor<Expression> {
 
   visitAtomExpr = (ctx: AtomExprContext): Expression => {
     if (ctx.NUMBER()) {
-      return new FloatConstExpression(Number(ctx.NUMBER().getText()));
+      return new ConstFloatExpression(Number(ctx.NUMBER().getText()));
     }
     if (ctx.ID()) {
-      return new FloatVariableExpression(
+      return new VariableFloatExpression(
         ctx.ID().getText(),
         this.variableTable
       );

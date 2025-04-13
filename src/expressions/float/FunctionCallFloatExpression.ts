@@ -53,7 +53,7 @@ const buildInFunctions = new Map<
   });
 }
 
-export class FloatFunctionCallExpression extends FloatExpression {
+export class FunctionCallFloatExpression extends FloatExpression {
   static buildInFunctionNames: ReadonlySet<string> = new Set(
     buildInFunctions.keys()
   );
