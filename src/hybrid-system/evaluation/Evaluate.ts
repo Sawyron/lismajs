@@ -84,6 +84,7 @@ const mapHsToDs = (hs: HybridSystem): DerivativeSystem => {
     const activeStateDiffMap = statesDiffMaps.get(activeState.name)!;
     const compositeMap = new Map([...sharedDiffMapMap, ...activeStateDiffMap]);
     hs.ifClauses
+      .values()
       .filter(clause => clause.predicate.evaluate())
       .map(clause => groupVariablesByNames(clause.diffVariables))
       .forEach(clauseMap => {
@@ -117,6 +118,7 @@ const mapHsToEqs = (hs: HybridSystem): EquationSystem => {
       hs.table.set(alg, compositeMap.get(alg)!.expression.evaluate())
     );
     const ifMap = hs.ifClauses
+      .values()
       .filter(clause => clause.predicate.evaluate())
       .map(clause => groupVariablesByNames(clause.algVariables))
       .reduce(

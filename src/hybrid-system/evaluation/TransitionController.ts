@@ -39,9 +39,12 @@ const getTransitionsFromState = (
   hs: HybridSystem
 ): [State, Transition][] =>
   hs.states
+    .values()
     .filter(s => s.name !== targetState.name)
     .flatMap(state =>
       state.transitions
+        .values()
         .filter(t => t.from === targetState.name)
         .map<[State, Transition]>(t => [state, t])
-    );
+    )
+    .toArray();
