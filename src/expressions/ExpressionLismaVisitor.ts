@@ -48,9 +48,12 @@ export class ExpressionLismaVisitor extends LismaVisitor<Expression> {
     if (UnaryFloatExpression.operations.has(operation)) {
       const expr = this.visit(ctx.expr());
       if (!(expr instanceof FloatExpression)) {
-        return new DeadEndExpression(
-          errorFromRuleContext(ctx, 'Can not apply unary operation')
+        const error = errorFromRuleContext(
+          ctx,
+          'Can not apply unary operation'
         );
+        this._errors.push(error);
+        return new DeadEndExpression(error);
       }
       return new UnaryFloatExpression(expr, operation);
     }

@@ -278,10 +278,6 @@ export class HybridSystemLismaListener extends LismaListener {
         )
       );
     }
-    const expression = this.exprVisitor.visit(exprCtx);
-    if (expression instanceof DeadEndExpression) {
-      this.errors.push(expression.error);
-    }
-    return expression;
+    return this.exprVisitor.visit(exprCtx);
   }
 }
