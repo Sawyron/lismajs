@@ -82,7 +82,11 @@ export class BinaryBooleanExpression extends BooleanExpression {
 
   private readonly evaluator: BinaryExpressionEvaluator<boolean>;
 
-  constructor(left: Expression, right: Expression, operation: string) {
+  constructor(
+    readonly left: Expression,
+    readonly right: Expression,
+    operation: string
+  ) {
     super();
     this.evaluator = new BinaryExpressionEvaluator(
       left,

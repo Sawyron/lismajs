@@ -2,7 +2,7 @@ import { FloatExpression } from './FloatExpression';
 
 export class VariableFloatExpression extends FloatExpression {
   constructor(
-    private readonly id: string,
+    readonly id: string,
     private readonly variableTable: Map<string, number>
   ) {
     super();

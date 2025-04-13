@@ -242,17 +242,16 @@ describe('Evaluate', () => {
             p1'=0;
             p2'=0;
 
-            L1 = 0;
-            L2 = 0;
-            B = 0;
-
             S1 = pi*pow(d1, 2)/4;
             S2 = pi*pow(d2, 2)/4;
             K1 = 0.000185*exp(-0.000006*pow(p1, 3))*L1;
             K2 = 0.000226*exp(-0.0000057*pow(p2, 3))*L2;
             V12 = K1*sqrt(h1-(h2-H)*B);
             Vout = K2*sqrt(h2);
-            
+
+            L1 = 0;
+            L2 = 0;
+            B = 0;
 
             h1'= (VInput - V12)/S1;
             h2'= (V12 - Vout)/S2;

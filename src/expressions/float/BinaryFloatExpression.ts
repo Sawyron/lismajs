@@ -39,7 +39,11 @@ export class BinaryFloatExpression extends FloatExpression {
 
   private readonly evaluator: BinaryExpressionEvaluator<number>;
 
-  constructor(left: Expression, right: Expression, operation: string) {
+  constructor(
+    readonly left: Expression,
+    readonly right: Expression,
+    operation: string
+  ) {
     super();
     this.evaluator = new BinaryExpressionEvaluator(
       left,

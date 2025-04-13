@@ -112,6 +112,47 @@ describe('HybridSystemLismaListener', () => {
     console.log(errors);
   });
 
+  it('should find recursive alg variables definitions', () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+    state a {
+        body {
+          x = y;
+          y = z + 1;
+          z = 3 * x;
+        }
+    } from b on (1 > 2);
+    `;
+    walkOnText(hsListener, code);
+
+    const errors = hsListener.getSemanticErrors();
+
+    expect(errors.length).toBeGreaterThanOrEqual(1);
+    console.log(errors);
+  });
+
+  it('should topologically sort alg variables', () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+    state a {
+        body {
+          x = y;
+          y = 3 * z;
+          z = 2 * time;
+        }
+    } from b on (1 > 2);
+    `;
+    walkOnText(hsListener, code);
+
+    const system = hsListener.getSystem();
+    const [state] = system.states;
+    expect(state.algVariables.map(alg => alg.name)).toStrictEqual([
+      'z',
+      'y',
+      'x',
+    ]);
+  });
+
   it('should parse predicate expr', () => {
     const hsListener = new HybridSystemLismaListener();
     const code = `

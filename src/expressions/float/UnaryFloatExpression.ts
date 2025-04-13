@@ -12,7 +12,7 @@ export class UnaryFloatExpression extends FloatExpression {
   static operations: ReadonlySet<string> = new Set(operationMap.keys());
 
   constructor(
-    private readonly inner: FloatExpression,
+    readonly inner: FloatExpression,
     private readonly operation: string
   ) {
     super();

@@ -28,6 +28,7 @@ import { WhenClause } from './types/WhenClause';
 import { ParserRuleContext } from 'antlr4';
 import { IfClause } from './types/IfClause';
 import { errorFromRuleContext } from '../expressions/util';
+import { topologicallySortEquations } from '../expressions/dependencyResolution';
 
 export class HybridSystemLismaListener extends LismaListener {
   private readonly exprVisitor: ExpressionLismaVisitor;
@@ -101,9 +102,22 @@ export class HybridSystemLismaListener extends LismaListener {
     });
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   exitState = (ctx: StateContext) => {
     const state = this.states.at(-1)!;
+    const algVarIdToExpr = new Map(
+      state.algVariables.map(alg => [alg.name, alg.expression])
+    );
+    const [sortedAlgVariables, cycledAlgVariables] =
+      topologicallySortEquations(algVarIdToExpr);
+    for (const cycleId of cycledAlgVariables) {
+      this.errors.push(
+        errorFromRuleContext(ctx, `Recursive dependency found for ${cycleId}`)
+      );
+    }
+    const idToVariable = new Map(
+      state.algVariables.map(alg => [alg.name, alg])
+    );
+    state.algVariables = sortedAlgVariables.map(alg => idToVariable.get(alg)!);
     state.transitions = [...this.transitionStack];
     this.transitionStack = [];
   };
