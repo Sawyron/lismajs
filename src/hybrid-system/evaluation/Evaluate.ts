@@ -72,11 +72,11 @@ const hybridSystemValuesProvider = (
 };
 
 const mapHsToDs = (hs: HybridSystem): DerivativeSystem => {
-  const sharedDiffMapMap = groupVariablesByNames(hs.sharedState.diffVariables);
+  const sharedDiffMapMap = variablesToMapByNames(hs.sharedState.diffVariables);
   const statesDiffMaps = new Map(
     hs.states.map(state => [
       state.name,
-      groupVariablesByNames(state.diffVariables),
+      variablesToMapByNames(state.diffVariables),
     ])
   );
   return () => {
@@ -86,7 +86,7 @@ const mapHsToDs = (hs: HybridSystem): DerivativeSystem => {
     hs.ifClauses
       .values()
       .filter(clause => clause.predicate.evaluate())
-      .map(clause => groupVariablesByNames(clause.diffVariables))
+      .map(clause => variablesToMapByNames(clause.diffVariables))
       .forEach(clauseMap => {
         for (const [name, variable] of clauseMap) {
           compositeMap.set(name, variable);
@@ -99,15 +99,15 @@ const mapHsToDs = (hs: HybridSystem): DerivativeSystem => {
   };
 };
 
-const groupVariablesByNames = (variables: Variable[]) =>
+const variablesToMapByNames = (variables: Variable[]) =>
   new Map(variables.map(variable => [variable.name, variable]));
 
 const mapHsToEqs = (hs: HybridSystem): EquationSystem => {
-  const sharedAlgMap = groupVariablesByNames(hs.sharedState.algVariables);
+  const sharedAlgMap = variablesToMapByNames(hs.sharedState.algVariables);
   const stateAlgMaps = new Map(
     hs.states.map(state => [
       state.name,
-      groupVariablesByNames(state.algVariables),
+      variablesToMapByNames(state.algVariables),
     ])
   );
   return () => {
@@ -120,7 +120,7 @@ const mapHsToEqs = (hs: HybridSystem): EquationSystem => {
     const ifMap = hs.ifClauses
       .values()
       .filter(clause => clause.predicate.evaluate())
-      .map(clause => groupVariablesByNames(clause.algVariables))
+      .map(clause => variablesToMapByNames(clause.algVariables))
       .reduce(
         (prev, current) => new Map([...prev, ...current]),
         new Map<string, Variable>()
