@@ -38,7 +38,7 @@ const resolveExpressionDependencies = (
 
 const topologicallySortEquations = (
   idToExpression: Map<string, Expression>
-): [string[], string[]] => {
+): [sortedIds: string[], errors: string[]] => {
   const dependencyGraph: Map<string, Set<string>> = new Map(
     idToExpression
       .entries()
