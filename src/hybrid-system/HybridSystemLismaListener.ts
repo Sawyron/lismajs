@@ -103,7 +103,10 @@ export class HybridSystemLismaListener extends LismaListener {
   };
 
   exitState = (ctx: StateContext) => {
-    const state = this.states.at(-1)!;
+    const state = this.states.at(-1);
+    if (!state) {
+      return;
+    }
     const algVarIdToExpr = new Map(
       state.algVariables.map(alg => [alg.name, alg.expression])
     );
@@ -124,13 +127,29 @@ export class HybridSystemLismaListener extends LismaListener {
 
   exitStatePart = (ctx: StatePartContext) => {
     if (ctx._part.text === 'body') {
-      const state = this.states.at(-1)!;
+      const state = this.states.at(-1);
+      if (!state) {
+        return;
+      }
+      if (state.algVariables.length > 0 || state.diffVariables.length > 0) {
+        this.errors.push(
+          errorFromRuleContext(ctx, 'State can only have one "body" block')
+        );
+      }
       state.diffVariables = [...this.diffStack];
       state.algVariables = [...this.algStack];
       this.diffStack = [];
       this.algStack = [];
     } else if (ctx._part.text === 'onEnter') {
-      const state = this.states.at(-1)!;
+      const state = this.states.at(-1);
+      if (!state) {
+        return;
+      }
+      if (state.onEnterStatements.length > 0) {
+        this.errors.push(
+          errorFromRuleContext(ctx, 'State can only have one "onEnter" block')
+        );
+      }
       state.onEnterStatements = [
         ...this.algStack.map(
           def =>
