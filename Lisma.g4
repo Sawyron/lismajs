@@ -60,3 +60,6 @@ NUMBER:
 	SIGN? [0-9]+ ('.' [0-9]+)?
 	| SIGN? [0-9]'.' [0-9]+ 'E' SIGN [0-9];
 FORMAT: [\r\n\t ]+ -> skip;
+SINGLE_LINE_COMMENT: '//' ~[\r\n]* -> skip;
+MULTI_LINE_COMMENT:
+	'/*' (MULTI_LINE_COMMENT | .)*? '*/' -> skip;
