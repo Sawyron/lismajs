@@ -42,9 +42,9 @@ const topologicallySortEquations = (
   const dependencyGraph: Map<string, Set<string>> = new Map(
     idToExpression
       .entries()
-      .map(([id, expr]) => [
+      .map(([id, expression]) => [
         id,
-        new Set(resolveExpressionDependencies(expr, idToExpression)),
+        new Set(resolveExpressionDependencies(expression, idToExpression)),
       ])
   );
 
@@ -56,24 +56,29 @@ const topologicallySortEquations = (
   if (errors.length > 0) {
     return [[], errors];
   }
+
   dependencyGraph
     .values()
-    .reduce((previous, current) => previous.union(current), new Set())
+    .reduce((accumulator, current) => {
+      current.forEach(id => accumulator.add(id));
+      return accumulator;
+    }, new Set())
+    .values()
+    .filter(id => !idToExpression.has(id))
     .forEach(id => {
-      if (!idToExpression.has(id)) {
-        for (const deps of dependencyGraph.values()) {
-          deps.delete(id);
-        }
+      for (const deps of dependencyGraph.values()) {
+        deps.delete(id);
       }
     });
-  const result: string[] = [];
-  const queue: string[] = [];
+
   const getZeros = () =>
     dependencyGraph
       .entries()
       .filter(entry => entry[1].size === 0)
       .map(entry => entry[0]);
-  queue.push(...getZeros());
+  const result: string[] = [];
+  const queue: string[] = [...getZeros()];
+
   while (queue.length > 0) {
     const current = queue.shift()!;
     dependencyGraph.delete(current);
