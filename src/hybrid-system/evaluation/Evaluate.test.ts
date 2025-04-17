@@ -6,6 +6,75 @@ import fs from 'fs/promises';
 import RungeKutta2Integrator from '../../integration/RungeKutta2Integrator';
 import { Token } from 'antlr4';
 import { describe, it } from '@jest/globals';
+import { EvaluationStep, VariableValue } from './types/EvaluationStep';
+import { createWriteStream } from 'fs';
+import { Readable, Transform } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
+import { HybridSystem } from '../types/HybridSystem';
+import { TransformCallback } from 'stream';
+
+const mapStepToCsv = (step: EvaluationStep): string =>
+  [step.x, ...step.values.map(variable => variable.value)].join(',');
+
+class StepCsvTransform extends Transform {
+  private headerWritten = false;
+
+  constructor(
+    private readonly hs: HybridSystem,
+    private readonly delimiter: string = ','
+  ) {
+    super({ readableObjectMode: false, writableObjectMode: true });
+  }
+
+  _transform(
+    chunk: unknown,
+    encoding: BufferEncoding,
+    callback: TransformCallback
+  ): void {
+    if (!StepCsvTransform.isStep(chunk)) {
+      callback(new Error(`${chunk} is not a step`));
+      return;
+    }
+    try {
+      if (!this.headerWritten) {
+        this.push(
+          [
+            'time',
+            ...this.hs.diffVariableNames,
+            ...this.hs.algVariableNames,
+          ].join(this.delimiter) + '\n'
+        );
+        this.headerWritten = true;
+      }
+      callback(null, mapStepToCsv(chunk) + '\n');
+    } catch (error) {
+      callback(error as Error);
+    }
+  }
+
+  private static isStep(value: unknown): value is EvaluationStep {
+    return (
+      typeof value === 'object' &&
+      value !== null &&
+      'x' in value &&
+      typeof value.x === 'number' &&
+      'values' in value &&
+      Array.isArray(value.values) &&
+      value.values.every(item => this.isVariableValue(item))
+    );
+  }
+
+  private static isVariableValue(value: unknown): value is VariableValue {
+    return (
+      typeof value === 'object' &&
+      value !== null &&
+      'name' in value &&
+      typeof value.name === 'string' &&
+      'value' in value &&
+      typeof value.value === 'number'
+    );
+  }
+}
 
 describe('Evaluate', () => {
   it('should work', () => {
@@ -57,6 +126,11 @@ describe('Evaluate', () => {
     );
     await fs.mkdir('./out', { recursive: true });
     await fs.writeFile('./out/when_test.json', JSON.stringify(result, null, 4));
+    await pipeline(
+      Readable.from(result),
+      new StepCsvTransform(system),
+      createWriteStream('./out/when_test.csv')
+    );
   });
 
   it('should work with "if" statement', async () => {
@@ -86,6 +160,11 @@ describe('Evaluate', () => {
     );
     await fs.mkdir('./out', { recursive: true });
     await fs.writeFile('./out/if_test.json', JSON.stringify(result, null, 4));
+    await pipeline(
+      Readable.from(result),
+      new StepCsvTransform(system),
+      createWriteStream('./out/if_test.csv')
+    );
   });
 
   it('should evaluate functions', async () => {
@@ -109,6 +188,11 @@ describe('Evaluate', () => {
     );
     await fs.mkdir('./out', { recursive: true });
     await fs.writeFile('./out/functions.json', JSON.stringify(result, null, 4));
+    await pipeline(
+      Readable.from(result),
+      new StepCsvTransform(system),
+      createWriteStream('./out/functions.csv')
+    );
   });
 
   it('should evaluate ball', async () => {
@@ -149,6 +233,11 @@ describe('Evaluate', () => {
 
     await fs.mkdir('./out', { recursive: true });
     await fs.writeFile('./out/ball.json', JSON.stringify(result, null, 4));
+    await pipeline(
+      Readable.from(result),
+      new StepCsvTransform(system),
+      createWriteStream('./out/ball.csv')
+    );
   });
 
   it('should evaluate masses', async () => {
@@ -222,6 +311,11 @@ describe('Evaluate', () => {
 
     await fs.mkdir('./out', { recursive: true });
     await fs.writeFile('./out/masses.json', JSON.stringify(result, null, 4));
+    await pipeline(
+      Readable.from(result),
+      new StepCsvTransform(system),
+      createWriteStream('./out/masses.csv')
+    );
   });
 
   it('should evaluate tanks', async () => {
@@ -339,5 +433,10 @@ describe('Evaluate', () => {
     );
     await fs.mkdir('./out', { recursive: true });
     await fs.writeFile('./out/tanks.json', JSON.stringify(result, null, 4));
+    await pipeline(
+      Readable.from(result),
+      new StepCsvTransform(system),
+      createWriteStream('./out/tanks.csv')
+    );
   });
 });
