@@ -76,6 +76,17 @@ class StepCsvTransform extends Transform {
   }
 }
 
+const writeSolutionToCsv = (
+  hs: HybridSystem,
+  steps: EvaluationStep[],
+  path: string
+): Promise<void> =>
+  pipeline(
+    Readable.from(steps),
+    new StepCsvTransform(hs),
+    createWriteStream(path)
+  );
+
 describe('Evaluate', () => {
   it('should work', () => {
     const hsListener = new HybridSystemLismaListener();
@@ -126,11 +137,7 @@ describe('Evaluate', () => {
     );
     await fs.mkdir('./out', { recursive: true });
     await fs.writeFile('./out/when_test.json', JSON.stringify(result, null, 4));
-    await pipeline(
-      Readable.from(result),
-      new StepCsvTransform(system),
-      createWriteStream('./out/when_test.csv')
-    );
+    await writeSolutionToCsv(system, result, './out/when_test.csv');
   });
 
   it('should work with "if" statement', async () => {
@@ -160,11 +167,7 @@ describe('Evaluate', () => {
     );
     await fs.mkdir('./out', { recursive: true });
     await fs.writeFile('./out/if_test.json', JSON.stringify(result, null, 4));
-    await pipeline(
-      Readable.from(result),
-      new StepCsvTransform(system),
-      createWriteStream('./out/if_test.csv')
-    );
+    await writeSolutionToCsv(system, result, './out/if_test.csv');
   });
 
   it('should evaluate functions', async () => {
@@ -188,11 +191,7 @@ describe('Evaluate', () => {
     );
     await fs.mkdir('./out', { recursive: true });
     await fs.writeFile('./out/functions.json', JSON.stringify(result, null, 4));
-    await pipeline(
-      Readable.from(result),
-      new StepCsvTransform(system),
-      createWriteStream('./out/functions.csv')
-    );
+    await writeSolutionToCsv(system, result, './out/functions.csv');
   });
 
   it('should evaluate ball', async () => {
@@ -233,11 +232,7 @@ describe('Evaluate', () => {
 
     await fs.mkdir('./out', { recursive: true });
     await fs.writeFile('./out/ball.json', JSON.stringify(result, null, 4));
-    await pipeline(
-      Readable.from(result),
-      new StepCsvTransform(system),
-      createWriteStream('./out/ball.csv')
-    );
+    await writeSolutionToCsv(system, result, './out/ball.csv');
   });
 
   it('should evaluate masses', async () => {
@@ -311,11 +306,7 @@ describe('Evaluate', () => {
 
     await fs.mkdir('./out', { recursive: true });
     await fs.writeFile('./out/masses.json', JSON.stringify(result, null, 4));
-    await pipeline(
-      Readable.from(result),
-      new StepCsvTransform(system),
-      createWriteStream('./out/masses.csv')
-    );
+    await writeSolutionToCsv(system, result, './out/masses.csv');
   });
 
   it('should evaluate tanks', async () => {
@@ -433,10 +424,6 @@ describe('Evaluate', () => {
     );
     await fs.mkdir('./out', { recursive: true });
     await fs.writeFile('./out/tanks.json', JSON.stringify(result, null, 4));
-    await pipeline(
-      Readable.from(result),
-      new StepCsvTransform(system),
-      createWriteStream('./out/tanks.csv')
-    );
+    await writeSolutionToCsv(system, result, './out/tanks.csv');
   });
 });
