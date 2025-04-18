@@ -6,7 +6,6 @@ import {
   ParenExprContext,
   UnaryExprContext,
 } from '../gen/LismaParser';
-import LismaVisitor from '../gen/LismaVisitor';
 import { BinaryBooleanExpression } from './boolean/BinaryBooleanExpression';
 import { DeadEndExpression } from './DeadEndExpression';
 import { Expression } from './Expression';
@@ -20,8 +19,9 @@ import { errorFromRuleContext } from './util';
 import { LismaError } from '../types/LismaError';
 import { ParserRuleContext } from 'antlr4';
 import { ArrayItemFloatExpression } from './float/ArrayItemFloatExpression';
+import LismaParserVisitor from '../gen/LismaParserVisitor';
 
-export class ExpressionLismaVisitor extends LismaVisitor<Expression> {
+export class ExpressionLismaVisitor extends LismaParserVisitor<Expression> {
   private _errors: LismaError[] = [];
 
   public get errors(): LismaError[] {

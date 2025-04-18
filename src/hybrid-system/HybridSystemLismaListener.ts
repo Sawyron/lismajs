@@ -1,14 +1,11 @@
-import LismaListener from '../gen/LismaListener';
 import {
   AlgDefContext,
   ArrayDefinitionContext,
-  ArrExprContext,
   ConstDefContext,
   DiffDefContext,
   ExprContext,
   IfStatementContext,
   InitCondContext,
-  NativeStatementContext,
   StateContext,
   StatePartContext,
   TransitionContext,
@@ -35,8 +32,9 @@ import { topologicallySortEquations } from '../expressions/dependencyResolution'
 import { createHsSandboxContext } from '../statements/native/context';
 import { Context } from 'vm';
 import { ArrayDef } from './types/ArrayDef';
+import LismaParserListener from '../gen/LismaParserListener';
 
-export class HybridSystemLismaListener extends LismaListener {
+export class HybridSystemLismaListener extends LismaParserListener {
   private readonly exprVisitor: ExpressionLismaVisitor;
   private states: State[] = [];
   private diffStack: Variable[] = [];

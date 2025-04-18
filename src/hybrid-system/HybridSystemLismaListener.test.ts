@@ -6,7 +6,6 @@ import { AssignStatement } from '../statements/AssignStatement';
 import { HybridSystemLismaListener } from './HybridSystemLismaListener';
 import { BinaryFloatExpression } from '../expressions';
 import { describe, it, expect } from '@jest/globals';
-import { NativeStatement } from '../statements/native/NativeStatement';
 
 describe('HybridSystemLismaListener', () => {
   it('should work', () => {

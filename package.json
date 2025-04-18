@@ -35,7 +35,7 @@
   },
   "scripts": {
     "test": "jest",
-    "generate": "rimraf ./src/gen && antlr4 -Dlanguage=TypeScript -o src/gen -visitor Lisma.g4",
+    "generate": "rimraf ./src/gen && antlr4 -Dlanguage=TypeScript -o src/gen -visitor LismaParser.g4 LismaLexer.g4",
     "build": "tsc && tsc-alias",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

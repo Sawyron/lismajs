@@ -1,11 +1,11 @@
 import { Token } from 'antlr4';
 import { LismaErrorListener, walkOnText } from '.';
-import LismaListener from './gen/LismaListener';
 import { describe, expect, it } from '@jest/globals';
+import LismaParserListener from './gen/LismaParserListener';
 
 describe('LismaErrorListener', () => {
   it('should find lex errors', () => {
-    const listener = new LismaListener();
+    const listener = new LismaParserListener();
     const errorListener = new LismaErrorListener<number>();
     walkOnText(listener, '@a', { lexerErrorListener: errorListener }, parser =>
       parser.expr()
@@ -17,7 +17,7 @@ describe('LismaErrorListener', () => {
   });
 
   it('should find syntax errors', () => {
-    const listener = new LismaListener();
+    const listener = new LismaParserListener();
     const errorListener = new LismaErrorListener<Token>();
     walkOnText(
       listener,
@@ -32,7 +32,7 @@ describe('LismaErrorListener', () => {
   });
 
   it('should find both lex and syntax errors', () => {
-    const listener = new LismaListener();
+    const listener = new LismaParserListener();
     const lexErrorListener = new LismaErrorListener<number>();
     const syntaxErrorListener = new LismaErrorListener<Token>();
     walkOnText(
