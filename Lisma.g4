@@ -1,21 +1,26 @@
 grammar Lisma;
+
 prog: topLevelStatement* EOF;
 topLevelStatement:
 	constDef
 	| initCond
 	| state
 	| whenStatement
-	| ifStatement;
+	| ifStatement
+	| arrayDefinition;
 state:
 	'state' ID LBRACKET statePart* RBRACKET stateTransitions? DELIMITER;
 stateTransitions: transition ( ',' transition)*;
 statePart:
 	part = 'body' LBRACKET definition* RBRACKET
-	| part = 'onEnter' LBRACKET algDef* RBRACKET;
+	| part = 'onEnter' LBRACKET discreteStatement* RBRACKET;
 ifStatement:
 	'if' LPAREN expr RPAREN LBRACKET definition* RBRACKET;
 whenStatement:
-	'when' LPAREN expr RPAREN LBRACKET algDef* RBRACKET;
+	'when' LPAREN expr RPAREN LBRACKET discreteStatement* RBRACKET;
+arrayDefinition: ID '=' '[' expr (',' expr)* ']' DELIMITER;
+discreteStatement: algDef;
+nativeStatement: 'native' '```' code = ~'```'+ '```';
 transition: 'from' ID (',' ID)* 'on' LPAREN expr RPAREN;
 definition: diffDef | algDef;
 diffDef: ID '\'' '=' expr DELIMITER;
@@ -27,6 +32,7 @@ expr:
 	| luop = ('!' | '+' | '-') expr								# unaryExpr
 	| ID LPAREN expr (',' expr+)* RPAREN						# callExpr
 	| ID LPAREN RPAREN											# callExpr
+	| ID '[' expr ']'											# arrExpr
 	| expr bop = '^' expr										# binaryExpr
 	| expr bop = ('*' | '/') expr								# binaryExpr
 	| expr bop = ('+' | '-') expr								# binaryExpr
@@ -37,19 +43,6 @@ expr:
 
 ID: [a-zA-Z_$]([a-zA-Z_$0-9])*;
 fragment SIGN: '+' | '-';
-BIN_OP:
-	'^'
-	| '*'
-	| '/'
-	| SIGN
-	| '=='
-	| '!='
-	| '<'
-	| '<='
-	| '>'
-	| '>='
-	| '||'
-	| '&&';
 L_UN_OP: '!' | SIGN;
 LPAREN: '(';
 RPAREN: ')';

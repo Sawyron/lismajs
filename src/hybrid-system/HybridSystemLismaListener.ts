@@ -1,11 +1,14 @@
 import LismaListener from '../gen/LismaListener';
 import {
   AlgDefContext,
+  ArrayDefinitionContext,
+  ArrExprContext,
   ConstDefContext,
   DiffDefContext,
   ExprContext,
   IfStatementContext,
   InitCondContext,
+  NativeStatementContext,
   StateContext,
   StatePartContext,
   TransitionContext,
@@ -19,7 +22,7 @@ import { State } from './types/State';
 import { Transition } from './types/Transition';
 import { Expression } from '../expressions/Expression';
 import { FloatExpression } from '../expressions/float/FloatExpression';
-import { ConstFloatExpression } from '../expressions/float/ConstConstExpression';
+import { ConstFloatExpression } from '../expressions/float/ConstFloatExpression';
 import { BooleanExpression } from '../expressions/boolean/BooleanExpression';
 import { AssignStatement } from '../statements/AssignStatement';
 import { ExpressionLismaVisitor } from '../expressions/ExpressionLismaVisitor';
@@ -29,6 +32,9 @@ import { ParserRuleContext } from 'antlr4';
 import { IfClause } from './types/IfClause';
 import { errorFromRuleContext } from '../expressions/util';
 import { topologicallySortEquations } from '../expressions/dependencyResolution';
+import { createHsSandboxContext } from '../statements/native/context';
+import { Context } from 'vm';
+import { ArrayDef } from './types/ArrayDef';
 
 export class HybridSystemLismaListener extends LismaListener {
   private readonly exprVisitor: ExpressionLismaVisitor;
@@ -38,14 +44,21 @@ export class HybridSystemLismaListener extends LismaListener {
   private transitionStack: Transition[] = [];
   private whenClauseStack: WhenClause[] = [];
   private ifClauseStack: IfClause[] = [];
+  private arrayStack: ArrayDef[] = [];
   private constants: Constant[] = [];
   private initials = new Map<string, FloatExpression>();
   private readonly variableTable = new Map<string, number>();
+  private readonly arrayTable = new Map<string, number[]>();
+  private readonly nativeContext: Context;
   private errors: LismaError[] = [];
 
   constructor() {
     super();
-    this.exprVisitor = new ExpressionLismaVisitor(this.variableTable);
+    this.exprVisitor = new ExpressionLismaVisitor(
+      this.variableTable,
+      this.arrayTable
+    );
+    this.nativeContext = createHsSandboxContext(this.variableTable);
   }
 
   public getSystem(): HybridSystem {
@@ -71,6 +84,12 @@ export class HybridSystemLismaListener extends LismaListener {
       onEnterStatements: [],
       transitions: [],
     };
+    for (const arrayDef of this.arrayStack) {
+      this.arrayTable.set(
+        arrayDef.name,
+        arrayDef.values.map(it => it.evaluate())
+      );
+    }
     return {
       diffVariableNames: [
         ...new Set(this.states.flatMap(s => s.diffVariables).map(d => d.name)),
@@ -78,9 +97,11 @@ export class HybridSystemLismaListener extends LismaListener {
       algVariableNames: [
         ...new Set(this.states.flatMap(s => s.algVariables).map(d => d.name)),
       ],
+      arrayNames: this.arrayStack.map(it => it.name),
       states: [...this.states],
       constants: [...this.constants],
-      table: this.variableTable,
+      variableTable: this.variableTable,
+      arrayTable: this.arrayTable,
       sharedState: sharedState,
       activeState: sharedState,
       whenClauses: [...this.whenClauseStack],
@@ -157,6 +178,7 @@ export class HybridSystemLismaListener extends LismaListener {
         ),
       ];
       this.algStack = [];
+      this.arrayStack = [];
     }
   };
 
@@ -191,6 +213,24 @@ export class HybridSystemLismaListener extends LismaListener {
     this.algStack.push({
       name: ctx.ID().getText(),
       expression: expression,
+    });
+  };
+
+  exitArrayDefinition = (ctx: ArrayDefinitionContext) => {
+    const expressions: FloatExpression[] = [];
+    for (const exprCtx of ctx.expr_list()) {
+      const expression = this.exprVisitor.visit(exprCtx);
+      if (!(expression instanceof FloatExpression)) {
+        this.errors.push(
+          errorFromRuleContext(exprCtx, 'Array values may only be floats')
+        );
+      } else {
+        expressions.push(expression);
+      }
+    }
+    this.arrayStack.push({
+      name: ctx.ID().getText(),
+      values: expressions,
     });
   };
 
@@ -262,6 +302,7 @@ export class HybridSystemLismaListener extends LismaListener {
       ],
     });
     this.algStack = [];
+    this.arrayStack = [];
   };
 
   exitIfStatement = (ctx: IfStatementContext) => {

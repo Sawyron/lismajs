@@ -22,13 +22,13 @@ const evaluateHybridSystem = (
   let integrationStep = {
     x: start,
     values: hybridSystem.diffVariableNames.map(
-      value => hybridSystem.table.get(value)!
+      value => hybridSystem.variableTable.get(value)!
     ),
   } as IntegrationStep;
   let algStep: number[] = [];
   const transitionController = new TransitionController(hybridSystem, () => {
     hybridSystem.diffVariableNames.forEach((variable, index) => {
-      integrationStep.values[index] = hybridSystem.table.get(variable)!;
+      integrationStep.values[index] = hybridSystem.variableTable.get(variable)!;
     });
   });
   const whenProcessor = new WhenClauseProcessor(hybridSystem.whenClauses);
@@ -37,7 +37,7 @@ const evaluateHybridSystem = (
     algStep = eqs(integrationStep.x);
     transitionController.adjustState();
     hybridSystem.algVariableNames.forEach((algName, index) =>
-      hybridSystem.table.set(algName, algStep[index])
+      hybridSystem.variableTable.set(algName, algStep[index])
     );
     evaluationSteps.push({
       x: integrationStep.x,
@@ -45,13 +45,13 @@ const evaluateHybridSystem = (
     });
     whenProcessor.process();
     integrationStep.values = hybridSystem.diffVariableNames.map(
-      value => hybridSystem.table.get(value)!
+      value => hybridSystem.variableTable.get(value)!
     );
     integrationSteps.push(integrationStep);
     integrationStep = integrator.makeStep(ds, integrationStep);
-    hybridSystem.table.set('time', integrationStep.x);
+    hybridSystem.variableTable.set('time', integrationStep.x);
     hybridSystem.diffVariableNames.forEach((name, index) => {
-      hybridSystem.table.set(name, integrationStep.values[index]);
+      hybridSystem.variableTable.set(name, integrationStep.values[index]);
     });
   }
   return evaluationSteps;
@@ -63,11 +63,18 @@ const hybridSystemValuesProvider = (
   const getValues = (variableNames: string[]): VariableValue[] =>
     variableNames.map(name => ({
       name: name,
-      value: hybridSystem.table.get(name)!,
+      value: hybridSystem.variableTable.get(name)!,
     }));
   return () => [
     ...getValues(hybridSystem.diffVariableNames),
     ...getValues(hybridSystem.algVariableNames),
+    ...hybridSystem.arrayNames.flatMap(arrayName => {
+      const arrayValues = hybridSystem.arrayTable.get(arrayName)!;
+      return arrayValues.map((item, index) => ({
+        name: `${arrayName}@${index}`,
+        value: item,
+      }));
+    }),
   ];
 };
 
@@ -115,7 +122,7 @@ const mapHsToEqs = (hs: HybridSystem): EquationSystem => {
     const activeStateAlgMap = stateAlgMaps.get(activeState.name)!;
     const compositeMap = new Map([...sharedAlgMap, ...activeStateAlgMap]);
     hs.algVariableNames.forEach(alg =>
-      hs.table.set(alg, compositeMap.get(alg)!.expression.evaluate())
+      hs.variableTable.set(alg, compositeMap.get(alg)!.expression.evaluate())
     );
     const ifMap = hs.ifClauses
       .values()
@@ -130,7 +137,7 @@ const mapHsToEqs = (hs: HybridSystem): EquationSystem => {
     }
     return hs.algVariableNames.map(alg => {
       const value = compositeMap.get(alg)!.expression.evaluate();
-      hs.table.set(alg, value);
+      hs.variableTable.set(alg, value);
       return value;
     });
   };

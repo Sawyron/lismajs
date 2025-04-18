@@ -1,4 +1,5 @@
 import {
+  ArrExprContext,
   AtomExprContext,
   BinaryExprContext,
   CallExprContext,
@@ -11,13 +12,14 @@ import { DeadEndExpression } from './DeadEndExpression';
 import { Expression } from './Expression';
 import { BinaryFloatExpression } from './float/BinaryFloatExpression';
 import { FloatExpression } from './float/FloatExpression';
-import { ConstFloatExpression } from './float/ConstConstExpression';
+import { ConstFloatExpression } from './float/ConstFloatExpression';
 import { UnaryFloatExpression } from './float/UnaryFloatExpression';
-import { VariableFloatExpression } from './float/VariableVariableExpression';
+import { VariableFloatExpression } from './float/VariableFloatExpression';
 import { FunctionCallFloatExpression } from './float/FunctionCallFloatExpression';
 import { errorFromRuleContext } from './util';
 import { LismaError } from '../types/LismaError';
 import { ParserRuleContext } from 'antlr4';
+import { ArrayItemFloatExpression } from './float/ArrayItemFloatExpression';
 
 export class ExpressionLismaVisitor extends LismaVisitor<Expression> {
   private _errors: LismaError[] = [];
@@ -26,7 +28,10 @@ export class ExpressionLismaVisitor extends LismaVisitor<Expression> {
     return [...this._errors];
   }
 
-  constructor(private readonly variableTable: Map<string, number> = new Map()) {
+  constructor(
+    private readonly variableTable: Map<string, number> = new Map(),
+    private readonly arrayTable: Map<string, number[]> = new Map()
+  ) {
     super();
   }
 
@@ -72,6 +77,20 @@ export class ExpressionLismaVisitor extends LismaVisitor<Expression> {
     return new DeadEndExpression(
       this.extractErrorFromRuleContext(ctx, `Undefined function '${id}'`)
     );
+  };
+
+  visitArrExpr = (ctx: ArrExprContext): Expression => {
+    const id = ctx.ID().getText();
+    const expr = this.visit(ctx.expr());
+    if (!(expr instanceof FloatExpression)) {
+      return new DeadEndExpression(
+        this.extractErrorFromRuleContext(
+          ctx.expr(),
+          'Array index must be number'
+        )
+      );
+    }
+    return new ArrayItemFloatExpression(id, expr, this.arrayTable);
   };
 
   visitParenExpr = (ctx: ParenExprContext): Expression => {

@@ -1,11 +1,11 @@
 import { visitText } from '..';
 import { DeadEndExpression } from './DeadEndExpression';
 import { ExpressionLismaVisitor } from './ExpressionLismaVisitor';
+import { ConstFloatExpression, VariableFloatExpression } from './float';
+import { ArrayItemFloatExpression } from './float/ArrayItemFloatExpression';
 import { BinaryFloatExpression } from './float/BinaryFloatExpression';
-import { ConstFloatExpression } from './float/ConstConstExpression';
 import { FloatExpression } from './float/FloatExpression';
 import { FunctionCallFloatExpression } from './float/FunctionCallFloatExpression';
-import { VariableFloatExpression } from './float/VariableVariableExpression';
 import { describe, it, expect } from '@jest/globals';
 
 describe('ExpressionLismaVisitor', () => {
@@ -62,5 +62,15 @@ describe('ExpressionLismaVisitor', () => {
 
     expect(expression).toBeInstanceOf(FunctionCallFloatExpression);
     expect((expression as FloatExpression).evaluate()).toBe(3);
+  });
+
+  it('should evaluate array item expr', () => {
+    const code = 'arr[2]';
+    const table = new Map<string, number[]>([['arr', [1, 2, 4]]]);
+    const visitor = new ExpressionLismaVisitor(new Map(), table);
+    const expression = visitText(visitor, code, {}, parser => parser.expr());
+
+    expect(expression).toBeInstanceOf(ArrayItemFloatExpression);
+    expect((expression as FloatExpression).evaluate()).toBe(4);
   });
 });

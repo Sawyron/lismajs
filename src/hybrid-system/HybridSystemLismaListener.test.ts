@@ -6,6 +6,7 @@ import { AssignStatement } from '../statements/AssignStatement';
 import { HybridSystemLismaListener } from './HybridSystemLismaListener';
 import { BinaryFloatExpression } from '../expressions';
 import { describe, it, expect } from '@jest/globals';
+import { NativeStatement } from '../statements/native/NativeStatement';
 
 describe('HybridSystemLismaListener', () => {
   it('should work', () => {
@@ -61,7 +62,7 @@ describe('HybridSystemLismaListener', () => {
     expect(String(constants[0].expression)).toStrictEqual('0.1');
     expect(String(constants[1].expression)).toStrictEqual('3 tau +');
 
-    const { table } = system;
+    const { variableTable: table } = system;
     expect(table.size).toBe(5);
     expect(table.get('x')).toStrictEqual(0);
     expect(table.get('y')).toStrictEqual(4);
@@ -223,7 +224,7 @@ describe('HybridSystemLismaListener', () => {
     walkOnText(hsListener, code);
 
     const system = hsListener.getSystem();
-    expect(system.table.get('x')).toBe(5);
+    expect(system.variableTable.get('x')).toBe(5);
   });
 
   it('should evaluate on exit expressions', () => {
@@ -246,7 +247,7 @@ describe('HybridSystemLismaListener', () => {
     const onEnter = system.states[0].onEnterStatements[0];
     expect(onEnter).toBeInstanceOf(AssignStatement);
     (onEnter as AssignStatement).execute();
-    expect(system.table.get('x')).toBe(10);
+    expect(system.variableTable.get('x')).toBe(10);
   });
 
   it('should parse when statements', () => {
@@ -292,5 +293,41 @@ describe('HybridSystemLismaListener', () => {
     const [diff] = ifClause.diffVariables;
     expect(diff.name).toBe('x');
     expect(String(diff.expression)).toBe('-2');
+  });
+
+  it('should parse arrays', () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+      state shared {
+      body {
+          x' = 4;
+      }
+      arr = [1, 2, 4];
+    };`;
+    const lexErrorListener = new LismaErrorListener<number>();
+    const syntaxErrorListener = new LismaErrorListener<Token>();
+
+    walkOnText(hsListener, code, {
+      lexerErrorListener: lexErrorListener,
+      parserErrorListener: syntaxErrorListener,
+    });
+
+    const system = hsListener.getSystem();
+
+    const semanticErrors = hsListener.getSemanticErrors();
+    if (lexErrorListener.errors.length > 0) {
+      console.error(lexErrorListener.errors);
+    }
+    if (syntaxErrorListener.errors.length > 0) {
+      console.error(syntaxErrorListener.errors);
+    }
+    if (semanticErrors.length > 0) {
+      console.log(semanticErrors);
+    }
+
+    const arr = system.arrayTable.get('arr')!;
+    expect(arr.length).toBe(3);
+    expect(arr).toStrictEqual([1, 2, 4]);
+    expect(system.arrayNames).toStrictEqual(['arr']);
   });
 });

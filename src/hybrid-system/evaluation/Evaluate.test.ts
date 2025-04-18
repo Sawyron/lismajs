@@ -42,6 +42,10 @@ class StepCsvTransform extends Transform {
             'time',
             ...this.hs.diffVariableNames,
             ...this.hs.algVariableNames,
+            ...this.hs.arrayNames.flatMap(arrayName => {
+              const array = this.hs.arrayTable.get(arrayName)!;
+              return array.map((value, index) => `${arrayName}@${index}`);
+            }),
           ].join(this.delimiter) + '\n'
         );
         this.headerWritten = true;
@@ -192,6 +196,30 @@ describe('Evaluate', () => {
     await fs.mkdir('./out', { recursive: true });
     await fs.writeFile('./out/functions.json', JSON.stringify(result, null, 4));
     await writeSolutionToCsv(system, result, './out/functions.csv');
+  });
+
+  it('should evaluate arrays', async () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+    state shared {
+      body {
+          x' = 1;
+      }
+    };
+    arr = [1, 4, 9];
+    `;
+    walkOnText(hsListener, code);
+
+    const system = hsListener.getSystem();
+    const result = evaluateHybridSystem(
+      system,
+      new RungeKutta2Integrator(0.001),
+      0,
+      10
+    );
+
+    await fs.mkdir('./out', { recursive: true });
+    await writeSolutionToCsv(system, result, './out/arrays.csv');
   });
 
   it('should evaluate ball', async () => {

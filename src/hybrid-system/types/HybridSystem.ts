@@ -6,9 +6,11 @@ import { WhenClause } from './WhenClause';
 export type HybridSystem = {
   diffVariableNames: string[];
   algVariableNames: string[];
+  arrayNames: string[];
   states: State[];
   constants: Constant[];
-  table: Map<string, number>;
+  variableTable: Map<string, number>;
+  arrayTable: Map<string, number[]>;
   whenClauses: WhenClause[];
   ifClauses: IfClause[];
   sharedState: State;

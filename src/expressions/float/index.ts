@@ -1,5 +1,5 @@
 export * from './BinaryFloatExpression';
-export * from './ConstConstExpression';
+export * from './ConstFloatExpression';
 export * from './FloatExpression';
 export * from './UnaryFloatExpression';
-export * from './VariableVariableExpression';
+export * from './VariableFloatExpression';
