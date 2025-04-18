@@ -6,7 +6,6 @@ import {
   ExprContext,
   IfStatementContext,
   InitCondContext,
-  NativeStatementContext,
   StateContext,
   StatePartContext,
   TransitionContext,
@@ -34,11 +33,12 @@ import { createHsSandboxContext } from '../statements/native/context';
 import { Context } from 'vm';
 import { ArrayDef } from './types/ArrayDef';
 import LismaParserListener from '../gen/LismaParserListener';
-import { NativeBlock } from './types/NativeBlock';
 import { NativeStatement } from '../statements/native/NativeStatement';
+import { StatementLismaVisitor } from '../statements/StatementLismaVisitor';
 
 export class HybridSystemLismaListener extends LismaParserListener {
   private readonly exprVisitor: ExpressionLismaVisitor;
+  private readonly statementVisitor: StatementLismaVisitor;
   private states: State[] = [];
   private diffStack: Variable[] = [];
   private algStack: Variable[] = [];
@@ -46,7 +46,6 @@ export class HybridSystemLismaListener extends LismaParserListener {
   private whenClauseStack: WhenClause[] = [];
   private ifClauseStack: IfClause[] = [];
   private arrayStack: ArrayDef[] = [];
-  private nativeStack: NativeBlock[] = [];
   private constants: Constant[] = [];
   private initials = new Map<string, FloatExpression>();
   private readonly variableTable = new Map<string, number>();
@@ -61,6 +60,11 @@ export class HybridSystemLismaListener extends LismaParserListener {
       this.arrayTable
     );
     this.nativeContext = createHsSandboxContext(this.variableTable);
+    this.statementVisitor = new StatementLismaVisitor(
+      this.exprVisitor,
+      code => new NativeStatement(this.nativeContext, code),
+      (id, expr) => new AssignStatement(id, expr, this.variableTable)
+    );
   }
 
   public getSystem(): HybridSystem {
@@ -174,18 +178,10 @@ export class HybridSystemLismaListener extends LismaParserListener {
           errorFromRuleContext(ctx, 'State can only have one "onEnter" block')
         );
       }
-      state.onEnterStatements = [
-        ...this.algStack.map(
-          def =>
-            new AssignStatement(def.name, def.expression, this.variableTable)
-        ),
-        ...this.nativeStack.map(
-          it => new NativeStatement(this.nativeContext, it.code)
-        ),
-      ];
+      state.onEnterStatements = ctx
+        .discreteStatement_list()
+        .map(it => this.statementVisitor.visit(it));
       this.algStack = [];
-      this.arrayStack = [];
-      this.nativeStack = [];
     }
   };
 
@@ -301,19 +297,11 @@ export class HybridSystemLismaListener extends LismaParserListener {
     }
     this.whenClauseStack.push({
       predicate: predicate,
-      statements: [
-        ...this.algStack.map(
-          def =>
-            new AssignStatement(def.name, def.expression, this.variableTable)
-        ),
-        ...this.nativeStack.map(
-          it => new NativeStatement(this.nativeContext, it.code)
-        ),
-      ],
+      statements: ctx
+        .discreteStatement_list()
+        .map(it => this.statementVisitor.visit(it)),
     });
     this.algStack = [];
-    this.arrayStack = [];
-    this.nativeStack = [];
   };
 
   exitIfStatement = (ctx: IfStatementContext) => {
@@ -334,10 +322,6 @@ export class HybridSystemLismaListener extends LismaParserListener {
     });
     this.diffStack = [];
     this.algStack = [];
-  };
-
-  exitNativeStatement = (ctx: NativeStatementContext) => {
-    this.nativeStack.push({ code: ctx.CODE_CONTENT().getText() });
   };
 
   private getExpression<T extends ParserRuleContext>(
