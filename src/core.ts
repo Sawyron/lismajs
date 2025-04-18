@@ -1,6 +1,6 @@
 import LismaLexer from './gen/LismaLexer';
-import LismaListener from './gen/LismaListener';
 import LismaParser from './gen/LismaParser';
-import LismaVisitor from './gen/LismaVisitor';
+import LismaParserListener from './gen/LismaParserListener';
+import LismaParserVisitor from './gen/LismaParserVisitor';
 
-export { LismaLexer, LismaListener, LismaParser, LismaVisitor };
+export { LismaLexer, LismaParserListener, LismaParser, LismaParserVisitor };
