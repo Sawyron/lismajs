@@ -372,7 +372,6 @@ describe('HybridSystemLismaListener', () => {
 
     const [native] = system.sharedState.onEnterStatements;
     expect(native).toBeInstanceOf(NativeStatement);
-    expect(String(native)).toBe(nativeCode);
     (native as NativeStatement).execute();
     expect(system.variableTable.get('x')).toBe(6);
     expect(system.variableTable.get('y')).toBe(2);

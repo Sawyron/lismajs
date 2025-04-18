@@ -2,19 +2,16 @@ import { Context, Script } from 'vm';
 import { Statement } from '../Statement';
 
 export class NativeStatement extends Statement {
+  private readonly script: Script;
   constructor(
     private readonly context: Context,
-    private readonly code: string
+    code: string
   ) {
     super();
+    this.script = new Script(code);
   }
 
   public execute(): void {
-    const script = new Script(this.code);
-    script.runInContext(this.context);
-  }
-
-  toString() {
-    return this.code;
+    this.script.runInContext(this.context);
   }
 }
