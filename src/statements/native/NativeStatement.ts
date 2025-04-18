@@ -13,4 +13,8 @@ export class NativeStatement extends Statement {
     const script = new Script(this.code);
     script.runInContext(this.context);
   }
+
+  toString() {
+    return this.code;
+  }
 }

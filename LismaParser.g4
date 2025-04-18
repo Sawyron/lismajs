@@ -24,8 +24,8 @@ whenStatement:
 	WHEN LPAREN expr RPAREN LBRACKET discreteStatement* RBRACKET;
 arrayDefinition:
 	ID ASSIGN LSQUARE expr (COMMA expr)* RSQUARE DELIMITER;
-discreteStatement: algDef;
-//nativeStatement: 'native' '```' code = ~'```'+ '```';
+discreteStatement: algDef | nativeStatement;
+nativeStatement: NATIVE OPEN_BACKTICK CODE_CONTENT CLOSE_BACKTICK;
 transition: FROM ID (COMMA ID)* ON LPAREN expr RPAREN;
 definition: diffDef | algDef;
 diffDef: ID DER ASSIGN expr DELIMITER;

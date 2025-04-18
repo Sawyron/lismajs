@@ -6,6 +6,7 @@ import {
   ExprContext,
   IfStatementContext,
   InitCondContext,
+  NativeStatementContext,
   StateContext,
   StatePartContext,
   TransitionContext,
@@ -33,6 +34,8 @@ import { createHsSandboxContext } from '../statements/native/context';
 import { Context } from 'vm';
 import { ArrayDef } from './types/ArrayDef';
 import LismaParserListener from '../gen/LismaParserListener';
+import { NativeBlock } from './types/NativeBlock';
+import { NativeStatement } from '../statements/native/NativeStatement';
 
 export class HybridSystemLismaListener extends LismaParserListener {
   private readonly exprVisitor: ExpressionLismaVisitor;
@@ -43,6 +46,7 @@ export class HybridSystemLismaListener extends LismaParserListener {
   private whenClauseStack: WhenClause[] = [];
   private ifClauseStack: IfClause[] = [];
   private arrayStack: ArrayDef[] = [];
+  private nativeStack: NativeBlock[] = [];
   private constants: Constant[] = [];
   private initials = new Map<string, FloatExpression>();
   private readonly variableTable = new Map<string, number>();
@@ -174,9 +178,13 @@ export class HybridSystemLismaListener extends LismaParserListener {
           def =>
             new AssignStatement(def.name, def.expression, this.variableTable)
         ),
+        ...this.nativeStack.map(
+          it => new NativeStatement(this.nativeContext, it.code)
+        ),
       ];
       this.algStack = [];
       this.arrayStack = [];
+      this.nativeStack = [];
     }
   };
 
@@ -297,10 +305,14 @@ export class HybridSystemLismaListener extends LismaParserListener {
           def =>
             new AssignStatement(def.name, def.expression, this.variableTable)
         ),
+        ...this.nativeStack.map(
+          it => new NativeStatement(this.nativeContext, it.code)
+        ),
       ],
     });
     this.algStack = [];
     this.arrayStack = [];
+    this.nativeStack = [];
   };
 
   exitIfStatement = (ctx: IfStatementContext) => {
@@ -321,6 +333,10 @@ export class HybridSystemLismaListener extends LismaParserListener {
     });
     this.diffStack = [];
     this.algStack = [];
+  };
+
+  exitNativeStatement = (ctx: NativeStatementContext) => {
+    this.nativeStack.push({ code: ctx.CODE_CONTENT().getText() });
   };
 
   private getExpression<T extends ParserRuleContext>(

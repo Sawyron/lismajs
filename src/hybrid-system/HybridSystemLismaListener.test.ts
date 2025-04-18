@@ -6,6 +6,7 @@ import { AssignStatement } from '../statements/AssignStatement';
 import { HybridSystemLismaListener } from './HybridSystemLismaListener';
 import { BinaryFloatExpression } from '../expressions';
 import { describe, it, expect } from '@jest/globals';
+import { NativeStatement } from '../statements/native/NativeStatement';
 
 describe('HybridSystemLismaListener', () => {
   it('should work', () => {
@@ -328,5 +329,52 @@ describe('HybridSystemLismaListener', () => {
     expect(arr.length).toBe(3);
     expect(arr).toStrictEqual([1, 2, 4]);
     expect(system.arrayNames).toStrictEqual(['arr']);
+  });
+
+  it('should parse native', () => {
+    const hsListener = new HybridSystemLismaListener();
+    const nativeCode = `
+    setVar('x', getVar('x') + 1);
+    this.a = [1, 2];
+    setVar('y', this.a[1]);
+    `;
+    const code = `
+      state shared {
+      body {
+          x' = 4;
+      }
+      onEnter {
+          native \`\`\`${nativeCode}\`\`\` 
+      }
+    };
+    x(t0) = 5;
+    `;
+    const lexErrorListener = new LismaErrorListener<number>();
+    const syntaxErrorListener = new LismaErrorListener<Token>();
+
+    walkOnText(hsListener, code, {
+      lexerErrorListener: lexErrorListener,
+      parserErrorListener: syntaxErrorListener,
+    });
+
+    const system = hsListener.getSystem();
+
+    const semanticErrors = hsListener.getSemanticErrors();
+    if (lexErrorListener.errors.length > 0) {
+      console.error(lexErrorListener.errors);
+    }
+    if (syntaxErrorListener.errors.length > 0) {
+      console.error(syntaxErrorListener.errors);
+    }
+    if (semanticErrors.length > 0) {
+      console.log(semanticErrors);
+    }
+
+    const [native] = system.sharedState.onEnterStatements;
+    expect(native).toBeInstanceOf(NativeStatement);
+    expect(String(native)).toBe(nativeCode);
+    (native as NativeStatement).execute();
+    expect(system.variableTable.get('x')).toBe(6);
+    expect(system.variableTable.get('y')).toBe(2);
   });
 });
