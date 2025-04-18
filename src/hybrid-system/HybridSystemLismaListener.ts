@@ -108,6 +108,7 @@ export class HybridSystemLismaListener extends LismaParserListener {
       activeState: sharedState,
       whenClauses: [...this.whenClauseStack],
       ifClauses: [...this.ifClauseStack],
+      context: this.nativeContext,
     };
   }
 

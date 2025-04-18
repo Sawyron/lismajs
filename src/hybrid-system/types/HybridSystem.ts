@@ -1,3 +1,4 @@
+import { Context } from 'vm';
 import { Constant } from './Constant';
 import { IfClause } from './IfClause';
 import { State } from './State';
@@ -15,4 +16,5 @@ export type HybridSystem = {
   ifClauses: IfClause[];
   sharedState: State;
   activeState: State;
+  context: Context;
 };
