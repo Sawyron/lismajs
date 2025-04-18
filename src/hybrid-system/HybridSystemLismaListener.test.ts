@@ -376,5 +376,8 @@ describe('HybridSystemLismaListener', () => {
     (native as NativeStatement).execute();
     expect(system.variableTable.get('x')).toBe(6);
     expect(system.variableTable.get('y')).toBe(2);
+
+    const { context } = system;
+    expect(context.a!).toStrictEqual([1, 2]);
   });
 });
