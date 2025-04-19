@@ -231,7 +231,7 @@ describe('Evaluate', () => {
         body {
             x' = 0.2;
         }
-    }
+    };
     when (time > 1) {
         native\`\`\`
             setExpr('x', '20', 'shared');
