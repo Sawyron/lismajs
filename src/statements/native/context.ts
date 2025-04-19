@@ -26,25 +26,26 @@ const bindContextToHs = (
   context['setExpr'] = setExpr;
 };
 
-const createSetState = (
-  hs: HybridSystem,
-  stateFromName: Map<string, State>
-) => {
-  return (name: string) => {
+const createSetState =
+  (
+    hs: HybridSystem,
+    stateFromName: Map<string, State>
+  ): ((name: string) => void) =>
+  (name: string) => {
     const state = stateFromName.get(name);
     if (state === undefined) {
       throw new Error(`State '${state}' not found`);
     }
     hs.activeState = state;
   };
-};
 
-const createSetExpr = (
-  hs: HybridSystem,
-  stateFromName: Map<string, State>,
-  exprVisitor: LismaParserVisitor<Expression>
-) => {
-  return (variableName: string, exprCode: string, stateName: string) => {
+const createSetExpr =
+  (
+    hs: HybridSystem,
+    stateFromName: Map<string, State>,
+    exprVisitor: LismaParserVisitor<Expression>
+  ): ((variableName: string, exprCode: string, stateName: string) => void) =>
+  (variableName: string, exprCode: string, stateName: string) => {
     const state = stateFromName.get(stateName);
     if (state === undefined) {
       throw new Error(`State ${stateName} not found`);
@@ -67,6 +68,5 @@ const createSetExpr = (
       setOrAdd(state.algVariables);
     }
   };
-};
 
 export { createHsSandboxContext, bindContextToHs };
