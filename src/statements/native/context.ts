@@ -39,13 +39,19 @@ const createSetState =
     hs.activeState = state;
   };
 
-const createSetExpr =
-  (
-    hs: HybridSystem,
-    stateFromName: Map<string, State>,
-    exprVisitor: LismaParserVisitor<Expression>
-  ): ((variableName: string, exprCode: string, stateName: string) => void) =>
-  (variableName: string, exprCode: string, stateName: string) => {
+const createSetExpr = (
+  hs: HybridSystem,
+  stateFromName: Map<string, State>,
+  exprVisitor: LismaParserVisitor<Expression>
+): ((variableName: string, exprCode: string, stateName: string) => void) => {
+  const variableNames = new Set([
+    ...hs.diffVariableNames,
+    ...hs.algVariableNames,
+  ]);
+  return (variableName: string, exprCode: string, stateName: string) => {
+    if (!variableNames.has(variableName)) {
+      throw new Error(`Unknown variable '${variableName}'`);
+    }
     const state = stateFromName.get(stateName);
     if (state === undefined) {
       throw new Error(`State ${stateName} not found`);
@@ -68,5 +74,6 @@ const createSetExpr =
       setOrAdd(state.algVariables);
     }
   };
+};
 
 export { createHsSandboxContext, bindContextToHs };
