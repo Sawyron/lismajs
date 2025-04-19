@@ -302,8 +302,8 @@ describe('HybridSystemLismaListener', () => {
       body {
           x' = 4;
       }
-      arr = [1, 2, 4];
-    };`;
+    };
+    arr = [1, 2, 4];`;
     const lexErrorListener = new LismaErrorListener<number>();
     const syntaxErrorListener = new LismaErrorListener<Token>();
 

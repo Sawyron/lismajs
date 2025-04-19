@@ -140,7 +140,6 @@ describe('Evaluate', () => {
       1
     );
     await fs.mkdir('./out', { recursive: true });
-    await fs.writeFile('./out/when_test.json', JSON.stringify(result, null, 4));
     await writeSolutionToCsv(system, result, './out/when_test.csv');
   });
 
@@ -170,7 +169,6 @@ describe('Evaluate', () => {
       10
     );
     await fs.mkdir('./out', { recursive: true });
-    await fs.writeFile('./out/if_test.json', JSON.stringify(result, null, 4));
     await writeSolutionToCsv(system, result, './out/if_test.csv');
   });
 
@@ -194,7 +192,6 @@ describe('Evaluate', () => {
       10
     );
     await fs.mkdir('./out', { recursive: true });
-    await fs.writeFile('./out/functions.json', JSON.stringify(result, null, 4));
     await writeSolutionToCsv(system, result, './out/functions.csv');
   });
 
@@ -220,6 +217,44 @@ describe('Evaluate', () => {
 
     await fs.mkdir('./out', { recursive: true });
     await writeSolutionToCsv(system, result, './out/arrays.csv');
+  });
+
+  it('should evaluate native', async () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+    state shared {
+      body {
+          x' = 1;
+      }
+    };
+    state dead {
+        body {
+            x' = 0.2;
+        }
+    }
+    when (time > 1) {
+        native\`\`\`
+            setExpr('x', '20', 'shared');
+        \`\`\`
+    }
+    when (time > 2) {
+        native\`\`\`
+            setState('dead');
+        \`\`\`
+    }
+    `;
+    walkOnText(hsListener, code);
+
+    const system = hsListener.getSystem();
+    const result = evaluateHybridSystem(
+      system,
+      new RungeKutta2Integrator(0.001),
+      0,
+      10
+    );
+
+    await fs.mkdir('./out', { recursive: true });
+    await writeSolutionToCsv(system, result, './out/native.csv');
   });
 
   it('should evaluate ball', async () => {
@@ -259,7 +294,6 @@ describe('Evaluate', () => {
     );
 
     await fs.mkdir('./out', { recursive: true });
-    await fs.writeFile('./out/ball.json', JSON.stringify(result, null, 4));
     await writeSolutionToCsv(system, result, './out/ball.csv');
   });
 
@@ -333,7 +367,6 @@ describe('Evaluate', () => {
     );
 
     await fs.mkdir('./out', { recursive: true });
-    await fs.writeFile('./out/masses.json', JSON.stringify(result, null, 4));
     await writeSolutionToCsv(system, result, './out/masses.csv');
   });
 
@@ -451,7 +484,6 @@ describe('Evaluate', () => {
       1000
     );
     await fs.mkdir('./out', { recursive: true });
-    await fs.writeFile('./out/tanks.json', JSON.stringify(result, null, 4));
     await writeSolutionToCsv(system, result, './out/tanks.csv');
   });
 });

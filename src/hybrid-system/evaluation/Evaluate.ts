@@ -17,6 +17,12 @@ const evaluateHybridSystem = (
   const ds = mapHsToDs(hybridSystem);
   const eqs = mapHsToEqs(hybridSystem);
   const valuesProvider = hybridSystemValuesProvider(hybridSystem);
+  const transitionController = new TransitionController(hybridSystem, () => {
+    hybridSystem.diffVariableNames.forEach((variable, index) => {
+      integrationStep.values[index] = hybridSystem.variableTable.get(variable)!;
+    });
+  });
+
   const evaluationSteps: EvaluationStep[] = [];
   const integrationSteps: IntegrationStep[] = [];
   let integrationStep = {
@@ -26,13 +32,11 @@ const evaluateHybridSystem = (
     ),
   } as IntegrationStep;
   let algStep: number[] = [];
-  const transitionController = new TransitionController(hybridSystem, () => {
-    hybridSystem.diffVariableNames.forEach((variable, index) => {
-      integrationStep.values[index] = hybridSystem.variableTable.get(variable)!;
-    });
-  });
+
+  eqs(start);
   const whenProcessor = new WhenClauseProcessor(hybridSystem.whenClauses);
   whenProcessor.init();
+
   while (integrationStep.x <= end) {
     algStep = eqs(integrationStep.x);
     transitionController.adjustState();

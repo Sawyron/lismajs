@@ -29,7 +29,10 @@ import { ParserRuleContext } from 'antlr4';
 import { IfClause } from './types/IfClause';
 import { errorFromRuleContext } from '../expressions/util';
 import { topologicallySortEquations } from '../expressions/dependencyResolution';
-import { createHsSandboxContext } from '../statements/native/context';
+import {
+  bindContextToHs,
+  createHsSandboxContext,
+} from '../statements/native/context';
 import { Context } from 'vm';
 import { ArrayDef } from './types/ArrayDef';
 import LismaParserListener from '../gen/LismaParserListener';
@@ -59,7 +62,7 @@ export class HybridSystemLismaListener extends LismaParserListener {
       this.variableTable,
       this.arrayTable
     );
-    this.nativeContext = createHsSandboxContext(this.variableTable);
+    this.nativeContext = createHsSandboxContext();
     this.statementVisitor = new StatementLismaVisitor(
       this.exprVisitor,
       code => new NativeStatement(this.nativeContext, code),
@@ -83,20 +86,24 @@ export class HybridSystemLismaListener extends LismaParserListener {
       this.variableTable.set(constant.name, constant.expression.evaluate());
     }
     this.variableTable.set('time', 0);
-    const sharedState = this.states.find(state => state.name === 'shared') ?? {
-      name: 'shared',
-      algVariables: [],
-      diffVariables: [],
-      onEnterStatements: [],
-      transitions: [],
-    };
+    let sharedState = this.states.find(state => state.name === 'shared');
+    if (sharedState === undefined) {
+      sharedState = {
+        name: 'shared',
+        algVariables: [],
+        diffVariables: [],
+        onEnterStatements: [],
+        transitions: [],
+      };
+      this.states.push(sharedState);
+    }
     for (const arrayDef of this.arrayStack) {
       this.arrayTable.set(
         arrayDef.name,
         arrayDef.values.map(it => it.evaluate())
       );
     }
-    return {
+    const system = {
       diffVariableNames: [
         ...new Set(this.states.flatMap(s => s.diffVariables).map(d => d.name)),
       ],
@@ -114,6 +121,8 @@ export class HybridSystemLismaListener extends LismaParserListener {
       ifClauses: [...this.ifClauseStack],
       context: this.nativeContext,
     };
+    bindContextToHs(system.context, system, this.exprVisitor);
+    return system;
   }
 
   public getSemanticErrors(): LismaError[] {

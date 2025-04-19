@@ -3,6 +3,7 @@ import { Statement } from '../Statement';
 
 export class NativeStatement extends Statement {
   private readonly script: Script;
+
   constructor(
     private readonly context: Context,
     code: string
