@@ -44,12 +44,19 @@ const createSetExpr = (
   stateFromName: Map<string, State>,
   exprVisitor: LismaParserVisitor<Expression>
 ): ((variableName: string, exprCode: string, stateName: string) => void) => {
-  const variableNames = new Set([
-    ...hs.diffVariableNames,
-    ...hs.algVariableNames,
-  ]);
+  const diffNames = new Set(hs.diffVariableNames);
+  const algNames = new Set(hs.algVariableNames);
+  const stateVariableMaps = new Map(
+    hs.states.map(state => [
+      state.name,
+      {
+        diff: new Map(state.diffVariables.map(diff => [diff.name, diff])),
+        alg: new Map(state.algVariables.map(alg => [alg.name, alg])),
+      },
+    ])
+  );
   return (variableName: string, exprCode: string, stateName: string) => {
-    if (!variableNames.has(variableName)) {
+    if (!diffNames.has(variableName) && !algNames.has(variableName)) {
       throw new Error(`Unknown variable '${variableName}'`);
     }
     const state = stateFromName.get(stateName);
@@ -60,18 +67,22 @@ const createSetExpr = (
     if (!(expr instanceof FloatExpression)) {
       throw new Error('Expression type must be float');
     }
-    const setOrAdd = (variables: Variable[]) => {
-      const variable = variables.find(it => it.name === variableName);
+    const setOrAdd = (
+      variables: Variable[],
+      variableMap: Map<string, Variable>
+    ) => {
+      const variable = variableMap.get(variableName);
       if (variable !== undefined) {
         variable.expression = expr;
       } else {
         variables.push({ name: variableName, expression: expr });
       }
     };
-    if (hs.diffVariableNames.find(it => it === variableName) !== undefined) {
-      setOrAdd(state.diffVariables);
-    } else if (hs.algVariableNames.find(it => it === variableName)) {
-      setOrAdd(state.algVariables);
+    const stateMap = stateVariableMaps.get(stateName)!;
+    if (diffNames.has(variableName)) {
+      setOrAdd(state.diffVariables, stateMap.diff);
+    } else if (algNames.has(variableName)) {
+      setOrAdd(state.algVariables, stateMap.diff);
     }
   };
 };
