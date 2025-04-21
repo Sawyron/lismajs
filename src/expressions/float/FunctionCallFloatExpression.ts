@@ -18,6 +18,7 @@ const buildInFunctions = new Map<
     }
     return Math.abs(argument.evaluate());
   });
+
   buildInFunctions.set('pow', args => {
     if (args.length !== 2) {
       throw new Error('Invalid number of arguments');
@@ -31,6 +32,7 @@ const buildInFunctions = new Map<
     }
     return Math.pow(target.evaluate(), power.evaluate());
   });
+
   buildInFunctions.set('exp', args => {
     if (args.length !== 1) {
       throw new Error('Invalid number of arguments');
@@ -41,6 +43,7 @@ const buildInFunctions = new Map<
     }
     return Math.exp(target.evaluate());
   });
+
   buildInFunctions.set('sqrt', args => {
     if (args.length !== 1) {
       throw new Error('Invalid number of arguments');
@@ -50,6 +53,28 @@ const buildInFunctions = new Map<
       throw new Error('Invalid types of arguments');
     }
     return Math.sqrt(target.evaluate());
+  });
+
+  buildInFunctions.set('trunc', args => {
+    if (args.length !== 1) {
+      throw new Error('Invalid number of arguments');
+    }
+    const [target] = args;
+    if (!(target instanceof FloatExpression)) {
+      throw new Error('Invalid parameter type');
+    }
+    return Math.trunc(target.evaluate());
+  });
+
+  buildInFunctions.set('sign', args => {
+    if (args.length !== 1) {
+      throw new Error('Invalid number of arguments');
+    }
+    const [target] = args;
+    if (!(target instanceof FloatExpression)) {
+      throw new Error('Invalid parameter type');
+    }
+    return Math.sign(target.evaluate());
   });
 }
 
