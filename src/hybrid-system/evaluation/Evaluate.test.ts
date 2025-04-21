@@ -1,4 +1,4 @@
-import { LismaErrorListener, walkOnText } from '../..';
+import { CompileConfig, LismaErrorListener, walkOnText } from '../..';
 import { evaluateHybridSystem } from './Evaluate';
 import { HybridSystemLismaListener } from '../HybridSystemLismaListener';
 import EulerIntegrator from '../../integration/EulerIntegrator';
@@ -485,5 +485,56 @@ describe('Evaluate', () => {
     );
     await fs.mkdir('./out', { recursive: true });
     await writeSolutionToCsv(system, result, './out/tanks.csv');
+  });
+
+  it('should evaluate pwm', async () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+    const kOmega = 100;
+    const TPwm = 0.1;
+    const kPwm = 0.1;
+    const k = 0.1;
+    const u = 1;
+
+    state shared {
+      body {
+          omega' = kOmega * f;
+          phi' = omega;
+          saw = time - trunc(time / TPwm) * TPwm;
+          x = u - k * omega - phi;
+          f = sign(x) * z;
+          z = 0;
+      }
+    };
+    if (kPwm * abs(x) >= saw) {
+        z = 1;
+    }
+    if (kPwm * abs(x) < saw) {
+        z = 0;
+    }
+    `;
+    const lexErrorListener = new LismaErrorListener<number>();
+    const syntaxErrorListener = new LismaErrorListener<Token>();
+    walkOnText(hsListener, code, {
+      lexerErrorListener: lexErrorListener,
+      parserErrorListener: syntaxErrorListener,
+    });
+    if (lexErrorListener.errors.length > 0) {
+      console.log(lexErrorListener.errors);
+    }
+    if (syntaxErrorListener.errors.length > 0) {
+      console.log(syntaxErrorListener.errors);
+    }
+
+    const system = hsListener.getSystem();
+    const result = evaluateHybridSystem(
+      system,
+      new RungeKutta2Integrator(0.001),
+      0,
+      2.5
+    );
+
+    await fs.mkdir('./out', { recursive: true });
+    await writeSolutionToCsv(system, result, './out/pwm.csv');
   });
 });
