@@ -21,7 +21,7 @@ export class FunctionCallExpressionEvaluator<T> {
   public evaluate(): T {
     const operation = this.operationMap.get(this.id);
     if (operation === undefined) {
-      throw new Error();
+      throw new Error(`Could not find mapping for function '${this.id}'`);
     }
     return operation(this.callArguments);
   }
