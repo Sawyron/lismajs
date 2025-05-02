@@ -54,7 +54,12 @@ export class StatementLismaVisitor extends LismaParserVisitor<Statement> {
     }
     const expression = this.expressionVisitor.visit(exprCtx);
     if (!(expression instanceof FloatExpression)) {
-      return new DeadEndStatement(this.extractError(exprCtx, ''));
+      return new DeadEndStatement(
+        this.extractError(
+          exprCtx,
+          'Expression for alg statement must be of float type'
+        )
+      );
     }
     return this.assignFactory(ctx.ID().getText(), expression);
   };
