@@ -25,7 +25,8 @@ whenStatement:
 arrayDefinition:
 	ID ASSIGN LSQUARE expr (COMMA expr)* RSQUARE DELIMITER;
 discreteStatement: algDef | nativeStatement;
-nativeStatement: NATIVE OPEN_BACKTICK CODE_CONTENT CLOSE_BACKTICK;
+nativeStatement:
+	NATIVE OPEN_BACKTICK CODE_CONTENT CLOSE_BACKTICK;
 transition: FROM ID (COMMA ID)* ON LPAREN expr RPAREN;
 definition: diffDef | algDef;
 diffDef: ID DER ASSIGN expr DELIMITER;
@@ -44,8 +45,3 @@ expr:
 	| expr bop = (OR | AND) expr								# binaryExpr
 	| ID														# atomExpr
 	| NUMBER													# atomExpr;
-
-// ID: [a-zA-Z_$]([a-zA-Z_$0-9])*; fragment SIGN: '+' | '-'; L_UN_OP: '!' | SIGN; LPAREN: '(';
-// RPAREN: ')'; LBRACKET: '{'; RBRACKET: '}'; DELIMITER: ';'; NUMBER: SIGN? [0-9]+ ('.' [0-9]+)? |
-// SIGN? [0-9]'.' [0-9]+ 'E' SIGN [0-9]; FORMAT: [\r\n\t ]+ -> skip; SINGLE_LINE_COMMENT: '//'
-// ~[\r\n]* -> skip; MULTI_LINE_COMMENT: '/*' (MULTI_LINE_COMMENT | .)*? '*/' -> skip;
