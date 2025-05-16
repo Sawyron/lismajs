@@ -12,35 +12,35 @@ const operationMap = new Map<
     if (left instanceof FloatExpression && right instanceof FloatExpression) {
       return left.evaluate() + right.evaluate();
     }
-    throw Error();
+    throw Error('Expression operand types are incompatible');
   });
 
   operationMap.set('-', (left, right) => {
     if (left instanceof FloatExpression && right instanceof FloatExpression) {
       return left.evaluate() - right.evaluate();
     }
-    throw Error();
+    throw Error('Expression operand types are incompatible');
   });
 
   operationMap.set('*', (left, right) => {
     if (left instanceof FloatExpression && right instanceof FloatExpression) {
       return left.evaluate() * right.evaluate();
     }
-    throw Error();
+    throw Error('Expression operand types are incompatible');
   });
 
   operationMap.set('/', (left, right) => {
     if (left instanceof FloatExpression && right instanceof FloatExpression) {
       return left.evaluate() / right.evaluate();
     }
-    throw Error();
+    throw Error('Expression operand types are incompatible');
   });
 
   operationMap.set('%', (left, right) => {
     if (left instanceof FloatExpression && right instanceof FloatExpression) {
       return left.evaluate() % right.evaluate();
     }
-    throw Error();
+    throw Error('Expression operand types are incompatible');
   });
 }
 
