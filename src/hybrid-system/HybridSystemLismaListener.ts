@@ -57,7 +57,7 @@ export class HybridSystemLismaListener extends LismaParserListener {
   private constants: Constant[] = [];
   private variables: Variable[] = [];
   private initials = new Map<string, FloatExpression>();
-  private readonly variableTable = new Map<string, number>();
+  private variableTable = new Map<string, number>();
   private readonly arrayTable = new Map<string, number[]>();
   private readonly nativeContext: Context;
   private errors: LismaError[] = [];
@@ -145,10 +145,11 @@ export class HybridSystemLismaListener extends LismaParserListener {
       whileClauses: [...this.whileClauseStack],
       context: this.nativeContext,
     };
+    this.assignments = [];
     this.states = [];
     this.constants = [];
     this.variables = [];
-    this.variableTable.clear();
+    // this.variableTable = new Map();
     this.whenClauseStack = [];
     this.ifClauseStack = [];
     this.whileClauseStack = [];
