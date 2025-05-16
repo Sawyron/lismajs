@@ -14,21 +14,31 @@ const operationMap = new Map<
     }
     throw Error();
   });
+
   operationMap.set('-', (left, right) => {
     if (left instanceof FloatExpression && right instanceof FloatExpression) {
       return left.evaluate() - right.evaluate();
     }
     throw Error();
   });
+
   operationMap.set('*', (left, right) => {
     if (left instanceof FloatExpression && right instanceof FloatExpression) {
       return left.evaluate() * right.evaluate();
     }
     throw Error();
   });
+
   operationMap.set('/', (left, right) => {
     if (left instanceof FloatExpression && right instanceof FloatExpression) {
       return left.evaluate() / right.evaluate();
+    }
+    throw Error();
+  });
+
+  operationMap.set('%', (left, right) => {
+    if (left instanceof FloatExpression && right instanceof FloatExpression) {
+      return left.evaluate() % right.evaluate();
     }
     throw Error();
   });

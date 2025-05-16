@@ -10,6 +10,7 @@ topLevelStatement:
 	| initCond
 	| state
 	| whenStatement
+	| whileStatement
 	| ifStatement
 	| arrayDefinition;
 state:
@@ -22,6 +23,8 @@ ifStatement:
 	IF LPAREN expr RPAREN LBRACKET definition* RBRACKET;
 whenStatement:
 	WHEN LPAREN expr RPAREN LBRACKET discreteStatement* RBRACKET;
+whileStatement:
+	WHILE LPAREN expr RPAREN LBRACKET discreteStatement* RBRACKET;
 arrayDefinition:
 	ID ASSIGN LSQUARE expr (COMMA expr)* RSQUARE DELIMITER;
 discreteStatement: algDef | nativeStatement;
@@ -39,7 +42,7 @@ expr:
 	| ID LPAREN expr (COMMA expr+)* RPAREN						# callExpr
 	| ID LPAREN RPAREN											# callExpr
 	| ID LSQUARE expr RSQUARE									# arrExpr
-	| expr bop = (MULTIPLY | DIVIDE) expr						# binaryExpr
+	| expr bop = (MULTIPLY | DIVIDE | REMAINDER) expr			# binaryExpr
 	| expr bop = SIGN expr										# binaryExpr
 	| expr bop = (EQUAL | NOT_EQUAL | LT | LTE | GT | GTE) expr	# binaryExpr
 	| expr bop = (OR | AND) expr								# binaryExpr

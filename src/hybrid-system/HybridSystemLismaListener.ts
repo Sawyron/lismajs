@@ -10,6 +10,7 @@ import {
   StatePartContext,
   TransitionContext,
   WhenStatementContext,
+  WhileStatementContext,
 } from '../gen/LismaParser';
 import { LismaError } from '../types/LismaError';
 import { Constant } from './types/Constant';
@@ -38,6 +39,7 @@ import { ArrayDef } from './types/ArrayDef';
 import LismaParserListener from '../gen/LismaParserListener';
 import { NativeStatement } from '../statements/native/NativeStatement';
 import { StatementLismaVisitor } from '../statements/StatementLismaVisitor';
+import { WhileClause } from './types/WhileClause';
 
 export class HybridSystemLismaListener extends LismaParserListener {
   private readonly exprVisitor: ExpressionLismaVisitor;
@@ -48,6 +50,7 @@ export class HybridSystemLismaListener extends LismaParserListener {
   private transitionStack: Transition[] = [];
   private whenClauseStack: WhenClause[] = [];
   private ifClauseStack: IfClause[] = [];
+  private whileClauseStack: WhileClause[] = [];
   private arrayStack: ArrayDef[] = [];
   private constants: Constant[] = [];
   private initials = new Map<string, FloatExpression>();
@@ -119,6 +122,7 @@ export class HybridSystemLismaListener extends LismaParserListener {
       activeState: sharedState,
       whenClauses: [...this.whenClauseStack],
       ifClauses: [...this.ifClauseStack],
+      whileClauses: [...this.whileClauseStack],
       context: this.nativeContext,
     };
     bindContextToHs(system.context, system, this.exprVisitor);
@@ -330,6 +334,26 @@ export class HybridSystemLismaListener extends LismaParserListener {
       diffVariables: [...this.diffStack],
     });
     this.diffStack = [];
+    this.algStack = [];
+  };
+
+  exitWhileStatement = (ctx: WhileStatementContext) => {
+    const predicate = this.getExpression(ctx, ctx => ctx.expr());
+    if (!(predicate instanceof BooleanExpression)) {
+      this.errors.push(
+        errorFromRuleContext(
+          ctx,
+          'expression for "while" statement must be of boolean type'
+        )
+      );
+      return;
+    }
+    this.whileClauseStack.push({
+      predicate: predicate,
+      statements: ctx
+        .discreteStatement_list()
+        .map(it => this.statementVisitor.visit(it)),
+    });
     this.algStack = [];
   };
 

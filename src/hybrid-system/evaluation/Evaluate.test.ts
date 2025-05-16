@@ -1,4 +1,4 @@
-import { CompileConfig, LismaErrorListener, walkOnText } from '../..';
+import { LismaErrorListener, walkOnText } from '../..';
 import { evaluateHybridSystem } from './Evaluate';
 import { HybridSystemLismaListener } from '../HybridSystemLismaListener';
 import EulerIntegrator from '../../integration/EulerIntegrator';
@@ -118,6 +118,29 @@ describe('Evaluate', () => {
     console.log(target);
   });
 
+  it('remainder should work', () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+    state shared {
+      body {
+          tick = time % 1;
+      }
+    };
+    `;
+    walkOnText(hsListener, code);
+
+    const system = hsListener.getSystem();
+    const result = evaluateHybridSystem(
+      system,
+      new EulerIntegrator(0.01),
+      0,
+      10
+    );
+    console.log(JSON.stringify(result.slice(0, 10), null, 2));
+    const target = result.find(res => res.x >= 5);
+    console.log(target);
+  });
+
   it('should work with "when" statement', async () => {
     const hsListener = new HybridSystemLismaListener();
     const code = `
@@ -225,6 +248,7 @@ describe('Evaluate', () => {
     state shared {
       body {
           x' = 1;
+          y' = 0;
       }
     };
     state dead {
@@ -240,6 +264,11 @@ describe('Evaluate', () => {
     when (time > 2) {
         native\`\`\`
             setState('dead');
+        \`\`\`
+    }
+    while (time < 1) {
+        native\`\`\`
+            setVar('y', getVar('y') + 1e-3);
         \`\`\`
     }
     `;
