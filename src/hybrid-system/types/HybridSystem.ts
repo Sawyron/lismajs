@@ -4,6 +4,7 @@ import { IfClause } from './IfClause';
 import { State } from './State';
 import { WhenClause } from './WhenClause';
 import { WhileClause } from './WhileClause';
+import { Variable } from './Variable';
 
 export type HybridSystem = {
   diffVariableNames: string[];
@@ -11,6 +12,7 @@ export type HybridSystem = {
   arrayNames: string[];
   states: State[];
   constants: Constant[];
+  variables: Variable[];
   variableTable: Map<string, number>;
   arrayTable: Map<string, number[]>;
   whenClauses: WhenClause[];

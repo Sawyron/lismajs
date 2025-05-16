@@ -166,6 +166,32 @@ describe('Evaluate', () => {
     await writeSolutionToCsv(system, result, './out/when_test.csv');
   });
 
+  it('should change var', async () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+    var a = 2;
+    state shared {
+      body {
+          x = a;
+      }
+    };
+    when (time > 0.5) {
+        a = 3;
+    }
+    `;
+    walkOnText(hsListener, code);
+
+    const system = hsListener.getSystem();
+    const result = evaluateHybridSystem(
+      system,
+      new EulerIntegrator(0.001),
+      0,
+      1
+    );
+    await fs.mkdir('./out', { recursive: true });
+    await writeSolutionToCsv(system, result, './out/assign_const.csv');
+  });
+
   it('should work with "if" statement', async () => {
     const hsListener = new HybridSystemLismaListener();
     const code = `

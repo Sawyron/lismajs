@@ -7,6 +7,7 @@ IF: 'if';
 WHEN: 'when';
 WHILE: 'while';
 CONST: 'const';
+VAR: 'var';
 FROM: 'from';
 ON: 'on';
 NATIVE: 'native';

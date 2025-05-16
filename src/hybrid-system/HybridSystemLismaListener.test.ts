@@ -14,6 +14,7 @@ describe('HybridSystemLismaListener', () => {
     const code = `
     const tau = 0.1;
     const phi = 3 + tau;
+    var u = 2;
     state shared {
     };
     state a {
@@ -78,8 +79,13 @@ describe('HybridSystemLismaListener', () => {
     expect(String(constants[0].expression)).toStrictEqual('0.1');
     expect(String(constants[1].expression)).toStrictEqual('3 tau +');
 
+    const { variables } = system;
+    expect(variables.length).toBe(1);
+    expect(variables[0].name).toBe('u');
+    expect(String(variables[0].expression)).toBe('2');
+
     const { variableTable: table } = system;
-    expect(table.size).toBe(5);
+    expect(table.size).toBe(6);
     expect(table.get('x')).toStrictEqual(0);
     expect(table.get('y')).toStrictEqual(4);
 

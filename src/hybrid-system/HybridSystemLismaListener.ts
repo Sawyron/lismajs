@@ -9,6 +9,7 @@ import {
   StateContext,
   StatePartContext,
   TransitionContext,
+  VarDefContext,
   WhenStatementContext,
   WhileStatementContext,
 } from '../gen/LismaParser';
@@ -53,6 +54,7 @@ export class HybridSystemLismaListener extends LismaParserListener {
   private whileClauseStack: WhileClause[] = [];
   private arrayStack: ArrayDef[] = [];
   private constants: Constant[] = [];
+  private variables: Variable[] = [];
   private initials = new Map<string, FloatExpression>();
   private readonly variableTable = new Map<string, number>();
   private readonly arrayTable = new Map<string, number[]>();
@@ -88,6 +90,9 @@ export class HybridSystemLismaListener extends LismaParserListener {
     for (const constant of this.constants) {
       this.variableTable.set(constant.name, constant.expression.evaluate());
     }
+    for (const variable of this.variables) {
+      this.variableTable.set(variable.name, variable.expression.evaluate());
+    }
     this.variableTable.set('time', 0);
     let sharedState = this.states.find(state => state.name === 'shared');
     if (sharedState === undefined) {
@@ -116,6 +121,7 @@ export class HybridSystemLismaListener extends LismaParserListener {
       arrayNames: this.arrayStack.map(it => it.name),
       states: [...this.states],
       constants: [...this.constants],
+      variables: [...this.variables],
       variableTable: this.variableTable,
       arrayTable: this.arrayTable,
       sharedState: sharedState,
@@ -125,6 +131,13 @@ export class HybridSystemLismaListener extends LismaParserListener {
       whileClauses: [...this.whileClauseStack],
       context: this.nativeContext,
     };
+    this.states = [];
+    this.constants = [];
+    this.variables = [];
+    this.variableTable.clear();
+    this.whenClauseStack = [];
+    this.ifClauseStack = [];
+    this.whileClauseStack = [];
     bindContextToHs(system.context, system, this.exprVisitor);
     return system;
   }
@@ -269,16 +282,30 @@ export class HybridSystemLismaListener extends LismaParserListener {
     );
   };
 
-  exitConstDef = (ctx: ConstDefContext) => {
-    const expression = this.getExpression(ctx, ctx => ctx.expr());
+  exitVarDef = (ctx: VarDefContext) => {
+    const expression = this.getExpression(ctx, ctx => ctx.idDef().expr());
     if (!(expression instanceof FloatExpression)) {
       this.errors.push(
         errorFromRuleContext(ctx, 'Constants must be of float type')
       );
       return;
     }
+    this.variables.push({
+      name: ctx.idDef().ID().getText(),
+      expression: expression,
+    });
+  };
+
+  exitConstDef = (ctx: ConstDefContext) => {
+    const expression = this.getExpression(ctx, ctx => ctx.idDef().expr());
+    if (!(expression instanceof FloatExpression)) {
+      this.errors.push(
+        errorFromRuleContext(ctx, 'Variables must be of float type')
+      );
+      return;
+    }
     this.constants.push({
-      name: ctx.ID().getText(),
+      name: ctx.idDef().ID().getText(),
       expression: expression,
     });
   };

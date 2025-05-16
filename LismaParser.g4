@@ -6,7 +6,8 @@ options {
 
 prog: topLevelStatement* EOF;
 topLevelStatement:
-	constDef
+	varDef
+	| constDef
 	| initCond
 	| state
 	| whenStatement
@@ -35,7 +36,9 @@ definition: diffDef | algDef;
 diffDef: ID DER ASSIGN expr DELIMITER;
 algDef: ID ASSIGN expr DELIMITER;
 initCond: ID LPAREN ZERO_TIME RPAREN eq = ASSIGN expr DELIMITER;
-constDef: CONST ID ASSIGN expr DELIMITER;
+varDef: VAR idDef;
+constDef: CONST idDef;
+idDef: ID ASSIGN expr DELIMITER;
 expr:
 	LPAREN expr RPAREN											# parenExpr
 	| luop = (EXCLAMATION | SIGN) expr							# unaryExpr
