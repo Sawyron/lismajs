@@ -25,12 +25,28 @@ describe('HybridSystemLismaListener', () => {
     } from b on (1 < 2), from c, d on (3 <= 4);
     y(t0) = 4;
     `;
-    walkOnText(hsListener, code);
+
+    const lexErrorListener = new LismaErrorListener<number>();
+    const syntaxErrorListener = new LismaErrorListener<Token>();
+    walkOnText(hsListener, code, {
+      lexerErrorListener: lexErrorListener,
+      parserErrorListener: syntaxErrorListener,
+    });
 
     const system = hsListener.getSystem();
     const { states } = system;
 
     expect(hsListener.getSemanticErrors().length).toBe(0);
+    const lexErrors = lexErrorListener.errors;
+    const syntaxErrors = syntaxErrorListener.errors;
+    if (lexErrors.length > 0) {
+      console.error(lexErrors);
+    }
+    if (syntaxErrors.length > 0) {
+      console.error(syntaxErrors);
+    }
+    expect(lexErrors.length).toBe(0);
+    expect(syntaxErrors.length).toBe(0);
 
     expect(states.length).toBe(2);
     const state = states[1];

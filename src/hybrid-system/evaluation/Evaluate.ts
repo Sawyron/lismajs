@@ -39,6 +39,9 @@ const evaluateHybridSystem = (
   whenProcessor.init();
   const whileProcessor = new WhileClauseProcessor(hybridSystem.whileClauses);
 
+  hybridSystem.sharedState.onEnterStatements.forEach(it => it.execute());
+  hybridSystem.sharedState.onEnterStatements = [];
+
   while (integrationStep.x <= end) {
     algStep = eqs(integrationStep.x);
     transitionController.adjustState();
