@@ -294,6 +294,30 @@ describe('HybridSystemLismaListener', () => {
     expect(String(whenClause.predicate)).toBe('x 3 >=');
   });
 
+  it('should fail on const assign', () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+      state a {
+          body {
+              x' = 2;
+              s  = 3;
+              s' = 4;
+          }
+          onEnter {
+              s = 5;
+          }
+      };
+      const s = 2;
+        `;
+    walkOnText(hsListener, code);
+
+    const system = hsListener.getSystem();
+    const errors = hsListener.getSemanticErrors();
+
+    expect(errors.length).toBe(3);
+    console.log(errors);
+  });
+
   it('should parse "if" statement', () => {
     const hsListener = new HybridSystemLismaListener();
     const code = `

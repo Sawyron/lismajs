@@ -6,7 +6,7 @@ const errorFromRuleContext = (
   message: string
 ): LismaError => ({
   message: message,
-  charPosition: ctx.start.start,
+  charPosition: ctx.start.column,
   line: ctx.start.line,
 });
 

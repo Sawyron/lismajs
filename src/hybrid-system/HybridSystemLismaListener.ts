@@ -45,6 +45,7 @@ import { WhileClause } from './types/WhileClause';
 export class HybridSystemLismaListener extends LismaParserListener {
   private readonly exprVisitor: ExpressionLismaVisitor;
   private readonly statementVisitor: StatementLismaVisitor;
+  private assignments: { id: string; context: ParserRuleContext }[] = [];
   private states: State[] = [];
   private diffStack: Variable[] = [];
   private algStack: Variable[] = [];
@@ -93,6 +94,19 @@ export class HybridSystemLismaListener extends LismaParserListener {
     for (const variable of this.variables) {
       this.variableTable.set(variable.name, variable.expression.evaluate());
     }
+
+    const constantNames = new Set(this.constants.map(it => it.name));
+    for (const { id, context } of this.assignments) {
+      if (constantNames.has(id)) {
+        this.errors.push(
+          errorFromRuleContext(
+            context,
+            `Cannot assign to '${id}' because it is a constant`
+          )
+        );
+      }
+    }
+
     this.variableTable.set('time', 0);
     let sharedState = this.states.find(state => state.name === 'shared');
     if (sharedState === undefined) {
@@ -226,6 +240,7 @@ export class HybridSystemLismaListener extends LismaParserListener {
       name: ctx.ID().getText(),
       expression: expression,
     });
+    this.assignments.push({ id: ctx.ID().getText(), context: ctx });
   };
 
   exitAlgDef = (ctx: AlgDefContext) => {
@@ -243,6 +258,7 @@ export class HybridSystemLismaListener extends LismaParserListener {
       name: ctx.ID().getText(),
       expression: expression,
     });
+    this.assignments.push({ id: ctx.ID().getText(), context: ctx });
   };
 
   exitArrayDefinition = (ctx: ArrayDefinitionContext) => {
