@@ -769,4 +769,136 @@ describe('Evaluate', () => {
     await fs.mkdir('./out', { recursive: true });
     await writeSolutionToCsv(system, result, './out/simple_bridge.csv');
   });
+
+  it('should evaluate bridge', async () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+    const BRIDGE_LENGTH = 10;
+    const CARS_VELOCITY = 1;
+    const ISLAND_CAPACITY = 4;
+
+    x(t0) = 0;
+
+    var carsA = 0;
+    var carsB = 0;
+    var carReadyLeaveIsland = 0;
+    var carsMainland = 1;
+    var carsIsland = 0;
+    var G1 = 0;
+    var G2 = 0;
+
+    k2 = [31, 33, 45];
+
+    when (k2[0] >= time) {
+      carReadyLeaveIsland = carReadyLeaveIsland + 1;
+    }
+    when (k2[1] >= time) {
+      carReadyLeaveIsland = carReadyLeaveIsland + 1;
+    }
+    when (k2[2] >= time) {
+      carReadyLeaveIsland = carReadyLeaveIsland + 1;
+    }
+
+    while (time > 0) {
+      native\`\`\`
+        setVar('carsMainland', getVar('carsMainland') + getVar('time') % 2);
+      \`\`\`
+    }
+
+    while (carsA > 0) {
+      native\`\`\`
+        this.carsA = carsA.map((value) => value++);
+        this.carsA.forEach((value) => {
+          if (value === 10) {
+            setVar('carsA', getVar('carsA') - 1);
+            setVar('carsIsland', getVar('carsIsland') + 1);
+          }
+        });
+        this.carsA = this.carsA.filter((value) => value < 10);
+      \`\`\`
+    }
+
+    while (carsB > 0) {
+      native\`\`\`
+        this.carsB = carsB.map((value) => value++);
+        this.carsB.forEach((value) => {
+          if (value === 10) {
+            setVar('carsB', getVar('carsB') - 1);
+          }
+        });
+        this.carsB = this.carsB.filter((value) => value < 10);
+      \`\`\`
+    }
+
+    state st0 { body {
+      G1 = 1;
+    }
+    onEnter {
+      carsMainland = carsMainland - 1;
+      carsA = carsA + 1;
+      native\`\`\`
+        this.carsA.push(0);
+      \`\`\`
+    } } from st2 on (carsIsland < ISLAND_CAPACITY && carsMainland >= 1 && carsA < CARS_VELOCITY && carReadyLeaveIsland < 1), from st3 on (carsIsland < ISLAND_CAPACITY && carsMainland >= 1 && carsB < 1 && carReadyLeaveIsland < 1), from shared on (time > 0);
+
+    state st1 { body {
+      G2 = 1;
+    }
+    onEnter {
+      carsIsland = carsIsland - 1;
+      carReadyLeaveIsland = carReadyLeaveIsland - 1;
+      carsB = carsB + 1;
+      native\`\`\`
+        this.carsB.push(0);
+      \`\`\`
+    } } from st2 on (carReadyLeaveIsland > 0 && carsA < 1), from st3 on (carsB < CARS_VELOCITY && carReadyLeaveIsland > 0);
+
+    state st2 { body {
+      G1 = 0;
+    }
+    onEnter {
+      G1 = 0;
+    } } from st0 on (G1 > 0 || carsA > 0), from st3 on (G2 < 1 && carsB < 1);
+
+    state st3 { body {
+      G2 = 0;
+    }
+    onEnter {
+      G2 = 0;
+    } } from st1 on (G2 > 0 || carsB > 0), from st2 on (G1 < 1 && carsA < 1);
+
+    state shared { body {
+      x' = 1;
+    }
+    onEnter {
+      native\`\`\`
+        this.carsA = [];
+        this.carsB = [];
+      \`\`\`
+    } } ;
+  `;
+    const lexErrorListener = new LismaErrorListener<number>();
+    const syntaxErrorListener = new LismaErrorListener<Token>();
+    walkOnText(hsListener, code, {
+      lexerErrorListener: lexErrorListener,
+      parserErrorListener: syntaxErrorListener,
+    });
+    if (lexErrorListener.errors.length > 0) {
+      console.log(lexErrorListener.errors);
+    }
+    if (syntaxErrorListener.errors.length > 0) {
+      console.log(syntaxErrorListener.errors);
+    }
+
+    const system = hsListener.getSystem();
+    const result = evaluateHybridSystem(
+      system,
+      new RungeKutta2Integrator(1),
+      0,
+      100
+    );
+
+    await fs.mkdir('./out', { recursive: true });
+    await writeSolutionToCsv(system, result, './out/bridge.csv');
+  });
 });

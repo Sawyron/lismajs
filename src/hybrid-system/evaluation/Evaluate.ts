@@ -8,6 +8,7 @@ import { EvaluationStep, VariableValue } from './types/EvaluationStep';
 import { TransitionController } from './TransitionController';
 import { WhenStatementProcessor as WhenClauseProcessor } from './WhenClauseProcessor';
 import { WhileClauseProcessor } from './WhileClauseProcessor';
+import { EvaluationError } from './EvaluationError';
 
 const evaluateHybridSystem = (
   hybridSystem: HybridSystem,
@@ -34,6 +35,7 @@ const evaluateHybridSystem = (
   } as IntegrationStep;
   let algStep: number[] = [];
 
+  transitionController.adjustState();
   eqs(start);
   const whenProcessor = new WhenClauseProcessor(hybridSystem.whenClauses);
   whenProcessor.init();
@@ -134,9 +136,15 @@ const mapHsToEqs = (hs: HybridSystem): EquationSystem => {
     const { activeState } = hs;
     const activeStateAlgMap = stateAlgMaps.get(activeState.name)!;
     const compositeMap = new Map([...sharedAlgMap, ...activeStateAlgMap]);
-    hs.algVariableNames.forEach(alg =>
-      hs.variableTable.set(alg, compositeMap.get(alg)!.expression.evaluate())
-    );
+    hs.algVariableNames.forEach(alg => {
+      const variable = compositeMap.get(alg);
+      if (variable === undefined) {
+        throw new EvaluationError(
+          `Could not find definition for '${alg}'. Probably it's not defined for state '${hs.activeState.name}' or shared state`
+        );
+      }
+      hs.variableTable.set(alg, compositeMap.get(alg)!.expression.evaluate());
+    });
     const ifMap = hs.ifClauses
       .values()
       .filter(clause => clause.predicate.evaluate())
@@ -155,5 +163,4 @@ const mapHsToEqs = (hs: HybridSystem): EquationSystem => {
     });
   };
 };
-
 export { evaluateHybridSystem };
