@@ -775,6 +775,7 @@ describe('Evaluate', () => {
     const code = `
     const BRIDGE_LENGTH = 10;
     const CARS_VELOCITY = 1;
+    const BRIDGE_CAPACITY = 1;
     const ISLAND_CAPACITY = 4;
 
     x(t0) = 0;
@@ -840,7 +841,7 @@ describe('Evaluate', () => {
       native\`\`\`
         this.carsA.push(0);
       \`\`\`
-    } } from st2 on ((carsIsland + carsA) < ISLAND_CAPACITY && carsMainland >= 1 && carsA < CARS_VELOCITY && carReadyLeaveIsland < 1), from st3 on (carsIsland < ISLAND_CAPACITY && carsMainland >= 1 && carsB < 1 && carReadyLeaveIsland < 1), from shared on (time > 0);
+    } } from st2 on ((carsIsland + carsA) < ISLAND_CAPACITY && carsMainland >= 1 && carsA < BRIDGE_CAPACITY && carReadyLeaveIsland < 1), from st3 on (carsIsland < ISLAND_CAPACITY && carsMainland >= 1 && carsB < 1 && carReadyLeaveIsland < 1), from shared on (time > 0);
 
     state st1 { body {
       x' = 1;
@@ -853,7 +854,7 @@ describe('Evaluate', () => {
       native\`\`\`
         this.carsB.push(0);
       \`\`\`
-    } } from st2 on (carReadyLeaveIsland > 0 && carsA < 1 && carsIsland > 0), from st3 on (carsB < CARS_VELOCITY && carReadyLeaveIsland > 0 && carsIsland > 0);
+    } } from st2 on (carReadyLeaveIsland > 0 && carsA < 1 && carsIsland > 0), from st3 on (carsB < BRIDGE_CAPACITY && carReadyLeaveIsland > 0 && carsIsland > 0);
 
     state st2 { body {
       x' = 1;
@@ -892,7 +893,8 @@ describe('Evaluate', () => {
     const hsListener = new HybridSystemLismaListener();
     const code = `
     const BRIDGE_LENGTH = 10;
-    const CARS_VELOCITY = 2;
+    const CARS_VELOCITY = 1;
+    const BRIDGE_CAPACITY = 2;
     const ISLAND_CAPACITY = 4;
 
     x(t0) = 0;
@@ -925,7 +927,7 @@ describe('Evaluate', () => {
 
     while (carsA > 0) {
       native\`\`\`
-        this.carsA = carsA.map((value) => ++value);
+        this.carsA = carsA.map((value) => value + getVar('CARS_VELOCITY'));
         this.carsA.forEach((value) => {
           if (value > getVar('BRIDGE_LENGTH')) {
             setVar('carsA', getVar('carsA') - 1);
@@ -938,7 +940,7 @@ describe('Evaluate', () => {
 
     while (carsB > 0) {
       native\`\`\`
-        this.carsB = carsB.map((value) => ++value);
+        this.carsB = carsB.map((value) => value + getVar('CARS_VELOCITY'));
         this.carsB.forEach((value) => {
           if (value > getVar('BRIDGE_LENGTH')) {
             setVar('carsB', getVar('carsB') - 1);
@@ -958,7 +960,7 @@ describe('Evaluate', () => {
       native\`\`\`
         this.carsA.push(0);
       \`\`\`
-    } } from st2 on ((carsIsland + carsA) < ISLAND_CAPACITY && carsMainland >= 1 && carsA < CARS_VELOCITY && carReadyLeaveIsland < 1), from st3 on (carsIsland < ISLAND_CAPACITY && carsMainland >= 1 && carsB < 1 && carReadyLeaveIsland < 1), from shared on (time > 0);
+    } } from st2 on ((carsIsland + carsA) < ISLAND_CAPACITY && carsMainland >= 1 && carsA < BRIDGE_CAPACITY && carReadyLeaveIsland < 1), from st3 on (carsIsland < ISLAND_CAPACITY && carsMainland >= 1 && carsB < 1 && carReadyLeaveIsland < 1), from shared on (time > 0);
 
     state st1 { body {
       x' = 1;
@@ -971,7 +973,7 @@ describe('Evaluate', () => {
       native\`\`\`
         this.carsB.push(0);
       \`\`\`
-    } } from st2 on (carReadyLeaveIsland > 0 && carsA < 1 && carsIsland > 0), from st3 on (carsB < CARS_VELOCITY && carReadyLeaveIsland > 0 && carsIsland > 0);
+    } } from st2 on (carReadyLeaveIsland > 0 && carsA < 1 && carsIsland > 0), from st3 on (carsB < BRIDGE_CAPACITY && carReadyLeaveIsland > 0 && carsIsland > 0);
 
     state st2 { body {
       x' = 1;
