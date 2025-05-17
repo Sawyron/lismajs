@@ -52,8 +52,10 @@ class StepCsvTransform extends Transform {
         this.headerWritten = true;
       }
       callback(null, mapStepToCsv(chunk) + '\n');
-    } catch (error: unknown) {
-      callback(error as Error);
+    } catch (ex: unknown) {
+      const error =
+        ex instanceof Error ? ex : new Error('Write error', { cause: ex });
+      callback(error, null);
     }
   }
 
