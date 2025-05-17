@@ -75,9 +75,11 @@ const hybridSystemValuesProvider = (
       name: name,
       value: hybridSystem.variableTable.get(name)!,
     }));
+  const variableNames = hybridSystem.variables.map(it => it.name);
   return () => [
     ...getValues(hybridSystem.diffVariableNames),
     ...getValues(hybridSystem.algVariableNames),
+    ...getValues(variableNames),
     ...hybridSystem.arrayNames.flatMap(arrayName => {
       const arrayValues = hybridSystem.arrayTable.get(arrayName)!;
       return arrayValues.map((item, index) => ({

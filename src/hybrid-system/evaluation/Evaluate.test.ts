@@ -42,6 +42,7 @@ class StepCsvTransform extends Transform {
             'time',
             ...this.hs.diffVariableNames,
             ...this.hs.algVariableNames,
+            ...this.hs.variables.map(it => it.name),
             ...this.hs.arrayNames.flatMap(arrayName => {
               const array = this.hs.arrayTable.get(arrayName)!;
               return array.map((value, index) => `${arrayName}@${index}`);
