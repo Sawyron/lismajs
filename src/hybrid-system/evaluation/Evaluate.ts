@@ -44,6 +44,8 @@ const evaluateHybridSystem = (
 
   while (integrationStep.x <= end) {
     algStep = eqs(integrationStep.x);
+    whenProcessor.process();
+    whileProcessor.process();
     transitionController.adjustState();
     hybridSystem.algVariableNames.forEach((algName, index) =>
       hybridSystem.variableTable.set(algName, algStep[index])
@@ -51,9 +53,8 @@ const evaluateHybridSystem = (
     evaluationSteps.push({
       x: integrationStep.x,
       values: valuesProvider(),
+      state: hybridSystem.activeState.name,
     });
-    whenProcessor.process();
-    whileProcessor.process();
     integrationStep.values = hybridSystem.diffVariableNames.map(
       value => hybridSystem.variableTable.get(value)!
     );
