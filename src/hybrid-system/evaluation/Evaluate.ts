@@ -9,7 +9,6 @@ import { TransitionController } from './TransitionController';
 import { WhenStatementProcessor as WhenClauseProcessor } from './WhenClauseProcessor';
 import { WhileClauseProcessor } from './WhileClauseProcessor';
 import { EvaluationError } from './EvaluationError';
-import { State } from '../types/State';
 
 const evaluateHybridSystem = (
   hybridSystem: HybridSystem,
@@ -115,18 +114,7 @@ const mapHsToDs = (hs: HybridSystem): DerivativeSystem => {
           compositeMap.set(name, variable);
         }
       });
-    const missingDiffVariables = findMissingVariables(
-      hs.diffVariableNames,
-      compositeMap
-    );
-    if (missingDiffVariables.length !== 0) {
-      throw new EvaluationError(
-        buildErrorMessageFromMissingVariables(
-          missingDiffVariables,
-          hs.activeState
-        )
-      );
-    }
+    validateVariableMap(hs, hs.diffVariableNames, compositeMap);
     const diffVariables = hs.diffVariableNames.map(
       diffName => compositeMap.get(diffName)!
     );
@@ -149,18 +137,7 @@ const mapHsToEqs = (hs: HybridSystem): EquationSystem => {
     const { activeState } = hs;
     const activeStateAlgMap = stateAlgMaps.get(activeState.name)!;
     const compositeMap = new Map([...sharedAlgMap, ...activeStateAlgMap]);
-    const missingAlgVariables = findMissingVariables(
-      hs.algVariableNames,
-      compositeMap
-    );
-    if (missingAlgVariables.length !== 0) {
-      throw new EvaluationError(
-        buildErrorMessageFromMissingVariables(
-          missingAlgVariables,
-          hs.activeState
-        )
-      );
-    }
+    validateVariableMap(hs, hs.algVariableNames, compositeMap);
     hs.algVariableNames.forEach(alg => {
       hs.variableTable.set(alg, compositeMap.get(alg)!.expression.evaluate());
     });
@@ -183,17 +160,18 @@ const mapHsToEqs = (hs: HybridSystem): EquationSystem => {
   };
 };
 
-const findMissingVariables = (
+const validateVariableMap = (
+  hs: HybridSystem,
   variableNames: string[],
   variableMap: Map<string, Variable>
-) => variableNames.filter(name => !variableMap.has(name));
-
-const buildErrorMessageFromMissingVariables = (
-  missingVariables: string[],
-  activeState: State
 ) => {
-  const joinedNames = missingVariables.map(name => `'${name}'`).join(',');
-  return `Could not find definition for ${joinedNames} Probably it's not defined for state ${activeState.name} or shared state`;
+  const missingVariables = variableNames.filter(name => !variableMap.has(name));
+  if (missingVariables.length !== 0) {
+    const joinedNames = missingVariables.map(name => `'${name}'`).join(',');
+    throw new EvaluationError(
+      `Could not find definition for ${joinedNames} Probably it's not defined for state ${hs.activeState.name} or shared state`
+    );
+  }
 };
 
 export { evaluateHybridSystem };
