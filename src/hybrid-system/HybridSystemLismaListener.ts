@@ -43,8 +43,8 @@ import { StatementLismaVisitor } from '../statements/StatementLismaVisitor';
 import { WhileClause } from './types/WhileClause';
 
 export class HybridSystemLismaListener extends LismaParserListener {
-  private readonly exprVisitor: ExpressionLismaVisitor;
-  private readonly statementVisitor: StatementLismaVisitor;
+  private exprVisitor: ExpressionLismaVisitor;
+  private statementVisitor: StatementLismaVisitor;
   private assignments: { id: string; context: ParserRuleContext }[] = [];
   private states: State[] = [];
   private diffStack: Variable[] = [];
@@ -58,8 +58,8 @@ export class HybridSystemLismaListener extends LismaParserListener {
   private variables: Variable[] = [];
   private initials = new Map<string, FloatExpression>();
   private variableTable = new Map<string, number>();
-  private readonly arrayTable = new Map<string, number[]>();
-  private readonly nativeContext: Context;
+  private arrayTable = new Map<string, number[]>();
+  private nativeContext: Context;
   private errors: LismaError[] = [];
 
   constructor() {
@@ -145,15 +145,8 @@ export class HybridSystemLismaListener extends LismaParserListener {
       whileClauses: [...this.whileClauseStack],
       context: this.nativeContext,
     };
-    this.assignments = [];
-    this.states = [];
-    this.constants = [];
-    this.variables = [];
-    // this.variableTable = new Map();
-    this.whenClauseStack = [];
-    this.ifClauseStack = [];
-    this.whileClauseStack = [];
     bindContextToHs(system.context, system, this.exprVisitor);
+    this.reset();
     return system;
   }
 
@@ -415,5 +408,27 @@ export class HybridSystemLismaListener extends LismaParserListener {
       );
     }
     return this.exprVisitor.visit(exprCtx);
+  }
+
+  private reset() {
+    this.assignments = [];
+    this.states = [];
+    this.constants = [];
+    this.variables = [];
+    this.variableTable = new Map();
+    this.whenClauseStack = [];
+    this.ifClauseStack = [];
+    this.whileClauseStack = [];
+    this.arrayTable = new Map();
+    this.nativeContext = createHsSandboxContext();
+    this.statementVisitor = new StatementLismaVisitor(
+      this.exprVisitor,
+      code => new NativeStatement(this.nativeContext, code),
+      (id, expr) => new AssignStatement(id, expr, this.variableTable)
+    );
+    this.exprVisitor = new ExpressionLismaVisitor(
+      this.variableTable,
+      this.arrayTable
+    );
   }
 }
