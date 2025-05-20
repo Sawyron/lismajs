@@ -35,8 +35,8 @@ const evaluateHybridSystem = (
   } as IntegrationStep;
   let algStep: number[] = [];
 
-  transitionController.adjustState();
   eqs(start);
+  transitionController.adjustState();
   const whenProcessor = new WhenClauseProcessor(hybridSystem.whenClauses);
   whenProcessor.init();
   const whileProcessor = new WhileClauseProcessor(hybridSystem.whileClauses);

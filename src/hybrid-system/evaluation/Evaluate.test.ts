@@ -1007,4 +1007,50 @@ describe('Evaluate', () => {
     await fs.mkdir('./out', { recursive: true });
     await writeSolutionToCsv(system, result, './out/bridge2.csv');
   });
+
+  it('should evaluate pwm state machine', async () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+    const kOmega = 100;
+    const t = 0.1;
+    const kp = 0.1;
+    const k = 0.1;
+    const u = 1;
+
+    state st0 { body {
+      f = 1;
+    } } from st1 on (x > 0 && kp * abs(x) >= saw), from st2 on (x > 0 && kp * abs(x) >= saw), from shared on (kp * abs(x) >= saw);
+
+    state st1 { body {
+      f = -1;
+    } } from st0 on (x < 0 && kp * abs(x) >= saw), from st2 on (x < 0 && kp * abs(x) >= saw);
+
+    state st2 { body {
+      f = 0;
+    } } from st0 on (kp * abs(x) < saw), from st1 on (kp * abs(x) < saw);
+
+    state shared { body {
+      omega' = kOmega * f;
+      phi' = omega;
+      saw = time - trunc(time / t) * t;
+      x = u - k * omega - phi;
+      f = 1;
+    }
+    onEnter {
+      x = 1;
+    } } ;
+    `;
+    walkOnText(hsListener, code);
+
+    const system = hsListener.getSystem();
+    const result = evaluateHybridSystem(
+      system,
+      new EulerIntegrator(0.001),
+      0,
+      2.5
+    );
+
+    await fs.mkdir('./out', { recursive: true });
+    await writeSolutionToCsv(system, result, './out/pwm2.csv');
+  });
 });
