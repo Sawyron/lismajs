@@ -596,6 +596,7 @@ describe('Evaluate', () => {
     );
 
     await fs.mkdir('./out', { recursive: true });
+    await fs.writeFile('pwm.json', JSON.stringify(result), 'utf8');
     await writeSolutionToCsv(system, result, './out/pwm.csv');
   });
 
@@ -897,8 +898,6 @@ describe('Evaluate', () => {
     const BRIDGE_CAPACITY = 2;
     const ISLAND_CAPACITY = 4;
 
-    x(t0) = 0;
-
     var carsA = 0;
     var carsB = 0;
     var carReadyLeaveIsland = 0;
@@ -951,7 +950,6 @@ describe('Evaluate', () => {
     }
 
     state st0 { body {
-      x' = 1;
     }
     onEnter {
       G1 = 1;
@@ -963,7 +961,6 @@ describe('Evaluate', () => {
     } } from st2 on ((carsIsland + carsA) < ISLAND_CAPACITY && carsMainland >= 1 && carsA < BRIDGE_CAPACITY && carReadyLeaveIsland < 1), from st3 on (carsIsland < ISLAND_CAPACITY && carsMainland >= 1 && carsB < 1 && carReadyLeaveIsland < 1), from shared on (time > 0);
 
     state st1 { body {
-      x' = 1;
     }
     onEnter {
       G2 = 1;
@@ -976,21 +973,18 @@ describe('Evaluate', () => {
     } } from st2 on (carReadyLeaveIsland > 0 && carsA < 1 && carsIsland > 0), from st3 on (carsB < BRIDGE_CAPACITY && carReadyLeaveIsland > 0 && carsIsland > 0);
 
     state st2 { body {
-      x' = 1;
     }
     onEnter {
       G1 = 0;
     } } from st0 on (G1 > 0 || carsA > 0), from st3 on (G2 < 1 && carsB < 1);
     
     state st3 { body {
-      x' = 1;
     }
     onEnter {
       G2 = 0;
     } } from st1 on (G2 > 0 || carsB > 0), from st2 on (G1 < 1 && carsA < 1);
     
     state shared { body {
-      x' = 1;
     }
     onEnter {
       native\`\`\`
@@ -1002,9 +996,10 @@ describe('Evaluate', () => {
     walkOnText(hsListener, code);
 
     const system = hsListener.getSystem();
-    const result = evaluateHybridSystem(system, new EulerIntegrator(1), 0, 100);
+    const result = evaluateHybridSystem(system, new EulerIntegrator(1), 0, 67);
 
     await fs.mkdir('./out', { recursive: true });
+    await fs.writeFile('bridge2.json', JSON.stringify(result), 'utf8');
     await writeSolutionToCsv(system, result, './out/bridge2.csv');
   });
 
@@ -1052,5 +1047,115 @@ describe('Evaluate', () => {
 
     await fs.mkdir('./out', { recursive: true });
     await writeSolutionToCsv(system, result, './out/pwm2.csv');
+  });
+
+  it('should evaluate two tanks with zenon', async () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+      const R1 = 0;
+      const R2 = 0;
+      const W = 0.08;
+      const V1 = 0.05;
+      const V2 = 0.05;
+      
+      x1(t0) = 0;
+      x2(t0)= 0.5;
+      
+      state st0 {
+        body {
+          x1' = W - V1;
+          x2' = -V2;
+        }
+      } from shared, st1 on (x1 <= R1);
+      
+      state st1 {
+        body {
+          x1' = -V1;
+          x2' = W - V2;
+        }
+      } from st0 on (x2 <= R2);
+      
+      state shared {
+        body {
+          x1' = W - V1;
+          x2' = -V2;
+        }
+      };
+    `;
+
+    walkOnText(hsListener, code);
+
+    const system = hsListener.getSystem();
+    const result = evaluateHybridSystem(system, new EulerIntegrator(0.001), 0, 35);
+
+    await fs.mkdir('./out', { recursive: true });
+    await writeSolutionToCsv(system, result, './out/tanskZenon.csv');
+  });
+
+
+  it('should evaluate two tanks with overflow', async () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+      const A = 0.000036;
+      const S = 0.0154;
+      const G = 9.8;
+      const HH = 0.2;
+      const HB = 0.1;
+      var Qp = 0.001;
+      
+      h1(t0) = 0.5;
+      h2(t0) = 0;
+      
+      while (h2 > HH) {
+        Qp = 0;
+      }
+      while (h2 < HB) {
+        Qp = 0.001;
+      }
+    
+      state shared {
+        body {
+          Q1 = A * sqrt(2 * G * h1);
+          Q2 = sign(h1 - h2) * A * sqrt(2 * G * abs(h1 - h2));
+          Q3 = sign(h1 - 0.5) * A * sqrt(2 * G * abs(h1 - 0.5));
+          Q4 = A * sqrt(2 * G * h2);
+        }
+      };
+      
+      state st1 {
+        body {
+          h1' = (Qp - Q1 - Q2) / S;
+          h2' = (Q2) / S;
+        }
+      } from shared, st2 on (h1 - 0.5 <= 0), from st4 on (time > 380);
+      
+      state st2 {
+        body {
+          h1' = (Qp - Q1 - Q2 - Q3) / S;
+          h2' = (Q2 + Q3) / S;
+        }
+      } from st1 on (h1 - 0.5 > 0), from st3 on (time > 380);
+      
+      state st3 {
+        body {
+          h1' = (Qp - Q1 - Q2) / S;
+          h2' = (Q2 + Q3 - Q4) / S;
+        }
+      } from st4 on (h1 - 0.5 > 0), from st3 on (time > 240 && time <= 380);
+      
+      state st4 {
+        body {
+          h1' = (Qp - Q1 - Q2) / S;
+          h2' = (Q2 - Q4) / S;
+        }
+      } from st3 on (h1 - 0.5 <= 0), from st1 on (time > 240 && time <= 380);
+    `;
+    walkOnText(hsListener, code);
+
+    const system = hsListener.getSystem();
+    const result = evaluateHybridSystem(system, new RungeKutta2Integrator(0.01), 0, 500);
+
+    await fs.mkdir('./out', { recursive: true });
+    await writeSolutionToCsv(system, result, './out/tanksOverflow.csv');
   });
 });
