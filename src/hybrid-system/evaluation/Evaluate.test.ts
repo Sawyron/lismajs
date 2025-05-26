@@ -1086,12 +1086,16 @@ describe('Evaluate', () => {
     walkOnText(hsListener, code);
 
     const system = hsListener.getSystem();
-    const result = evaluateHybridSystem(system, new EulerIntegrator(0.001), 0, 35);
+    const result = evaluateHybridSystem(
+      system,
+      new RungeKutta2Integrator(0.001),
+      0,
+      35
+    );
 
     await fs.mkdir('./out', { recursive: true });
     await writeSolutionToCsv(system, result, './out/tanskZenon.csv');
   });
-
 
   it('should evaluate two tanks with overflow', async () => {
     const hsListener = new HybridSystemLismaListener();
@@ -1153,7 +1157,12 @@ describe('Evaluate', () => {
     walkOnText(hsListener, code);
 
     const system = hsListener.getSystem();
-    const result = evaluateHybridSystem(system, new RungeKutta2Integrator(0.01), 0, 500);
+    const result = evaluateHybridSystem(
+      system,
+      new RungeKutta2Integrator(0.01),
+      0,
+      500
+    );
 
     await fs.mkdir('./out', { recursive: true });
     await writeSolutionToCsv(system, result, './out/tanksOverflow.csv');

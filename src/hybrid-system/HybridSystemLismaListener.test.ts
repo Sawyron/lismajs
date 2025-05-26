@@ -311,7 +311,7 @@ describe('HybridSystemLismaListener', () => {
         `;
     walkOnText(hsListener, code);
 
-    const system = hsListener.getSystem();
+    hsListener.getSystem();
     const errors = hsListener.getSemanticErrors();
 
     expect(errors.length).toBe(3);
