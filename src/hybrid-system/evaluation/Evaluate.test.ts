@@ -908,13 +908,7 @@ describe('Evaluate', () => {
 
     k2 = [31, 33, 45];
     
-    when (k2[0] <= time) {
-      carReadyLeaveIsland = carReadyLeaveIsland + 1;
-    }
-    when (k2[1] <= time) {
-      carReadyLeaveIsland = carReadyLeaveIsland + 1;
-    }
-    when (k2[2] <= time) {
+    when (time % 5 == 0) {
       carReadyLeaveIsland = carReadyLeaveIsland + 1;
     }
 
@@ -996,11 +990,167 @@ describe('Evaluate', () => {
     walkOnText(hsListener, code);
 
     const system = hsListener.getSystem();
-    const result = evaluateHybridSystem(system, new EulerIntegrator(1), 0, 67);
+    const result = evaluateHybridSystem(system, new EulerIntegrator(1), 0, 670);
 
     await fs.mkdir('./out', { recursive: true });
     await fs.writeFile('bridge2.json', JSON.stringify(result), 'utf8');
     await writeSolutionToCsv(system, result, './out/bridge2.csv');
+  });
+
+  it('should evaluate complex bridge', async () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+    const BRIDGE_LENGTH = 20;
+    const CARS_VELOCITY = 1;
+    const BRIDGE_CAPACITY = 10;
+    const ISLAND_CAPACITY = 20;
+
+    var carsA = 0;
+    var carsB = 0;
+    var carReadyLeaveIsland = 0;
+    var carsMainland = 1;
+    var carsIsland = 0;
+    var G1 = 0;
+    var G2 = 0;
+    
+    when (time % 10 == 0) {
+      native\`\`\`{
+        const random = Math.random();
+        if (getVar('carReadyLeaveIsland') < (getVar('BRIDGE_CAPACITY') / 2) && random > 0.5) {
+            setVar('carReadyLeaveIsland', getVar('carReadyLeaveIsland') + 1);
+        }
+      }
+      \`\`\`
+    }
+
+    while (time > 0) {
+      native\`\`\`
+        setVar('carsMainland', getVar('carsMainland') + getVar('time') % 2);
+      \`\`\`
+    }
+
+    while (carsA > 0) {
+      native\`\`\`
+        this.carsA = carsA.map((value) => value + getVar('CARS_VELOCITY'));
+        this.carsA.forEach((value) => {
+          if (value > getVar('BRIDGE_LENGTH')) {
+            setVar('carsA', getVar('carsA') - 1);
+            setVar('carsIsland', getVar('carsIsland') + 1);
+          }
+        });
+        this.carsA = this.carsA.filter((value) => value <= getVar('BRIDGE_LENGTH'));
+      \`\`\`
+    }
+
+    while (carsB > 0) {
+      native\`\`\`
+        this.carsB = carsB.map((value) => value + getVar('CARS_VELOCITY'));
+        this.carsB.forEach((value) => {
+          if (value > getVar('BRIDGE_LENGTH')) {
+            setVar('carsB', getVar('carsB') - 1);
+          }
+        });
+        this.carsB = this.carsB.filter((value) => value <= getVar('BRIDGE_LENGTH'));
+      \`\`\`
+    }
+
+    state st0 { body {
+    }
+    onEnter {
+      G1 = 1;
+      carsMainland = carsMainland - 1;
+      carsA = carsA + 1;
+      native\`\`\`
+        this.carsA.push(0);
+      \`\`\`
+    } } from st2 on ((carsIsland + carsA) < ISLAND_CAPACITY && carsMainland >= 1 && carsA < BRIDGE_CAPACITY && carReadyLeaveIsland < 1), from st3 on (carsIsland < ISLAND_CAPACITY && carsMainland >= 1 && carsB < 1 && carReadyLeaveIsland < 1), from shared on (time > 0);
+
+    state st1 { body {
+    }
+    onEnter {
+      G2 = 1;
+      carsIsland = carsIsland - 1;
+      carReadyLeaveIsland = carReadyLeaveIsland - 1;
+      carsB = carsB + 1;
+      native\`\`\`
+        this.carsB.push(0);
+      \`\`\`
+    } } from st2 on (carReadyLeaveIsland > 0 && carsA < 1 && carsIsland > 0), from st3 on (carsB < BRIDGE_CAPACITY && carReadyLeaveIsland > 0 && carsIsland > 0);
+
+    state st2 { body {
+    }
+    onEnter {
+      G1 = 0;
+    } } from st0 on (G1 > 0 || carsA > 0), from st3 on (G2 < 1 && carsB < 1);
+    
+    state st3 { body {
+    }
+    onEnter {
+      G2 = 0;
+    } } from st1 on (G2 > 0 || carsB > 0), from st2 on (G1 < 1 && carsA < 1);
+    
+    state shared { body {
+    }
+    onEnter {
+      native\`\`\`
+        this.carsA = [];
+        this.carsB = [];
+      \`\`\`
+    } } ;
+    `;
+    walkOnText(hsListener, code);
+
+    const system = hsListener.getSystem();
+    const result = evaluateHybridSystem(system, new EulerIntegrator(1), 0, 200);
+
+    await fs.mkdir('./out', { recursive: true });
+    await writeSolutionToCsv(system, result, './out/bridge_many.csv');
+  });
+
+  it('should evaluate pwm state machine', async () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+    const kOmega = 100;
+    const t = 0.1;
+    const kp = 0.1;
+    const k = 0.1;
+    const u = 1;
+
+    state st0 { body {
+      f = 1;
+    } } from st1 on (x > 0 && kp * abs(x) >= saw), from st2 on (x > 0 && kp * abs(x) >= saw), from shared on (kp * abs(x) >= saw);
+
+    state st1 { body {
+      f = -1;
+    } } from st0 on (x < 0 && kp * abs(x) >= saw), from st2 on (x < 0 && kp * abs(x) >= saw);
+
+    state st2 { body {
+      f = 0;
+    } } from st0 on (kp * abs(x) < saw), from st1 on (kp * abs(x) < saw);
+
+    state shared { body {
+      omega' = kOmega * f;
+      phi' = omega;
+      saw = time - trunc(time / t) * t;
+      x = u - k * omega - phi;
+      f = 1;
+    }
+    onEnter {
+      x = 1;
+    } } ;
+    `;
+    walkOnText(hsListener, code);
+
+    const system = hsListener.getSystem();
+    const result = evaluateHybridSystem(
+      system,
+      new EulerIntegrator(0.001),
+      0,
+      2.5
+    );
+
+    await fs.mkdir('./out', { recursive: true });
+    await writeSolutionToCsv(system, result, './out/pwm2.csv');
   });
 
   it('should evaluate pwm state machine', async () => {
@@ -1166,5 +1316,66 @@ describe('Evaluate', () => {
 
     await fs.mkdir('./out', { recursive: true });
     await writeSolutionToCsv(system, result, './out/tanksOverflow.csv');
+  });
+
+  it('should evaluate pendulum with tear', async () => {
+    const hsListener = new HybridSystemLismaListener();
+    const code = `
+      const l = 5;
+      const point = 4;
+      const g = 9.81;
+
+      alpha(t0) = - pi() / 2;
+
+      state shared {
+          body {
+              vx = 0;
+              vy = 0;
+              x' = vx * 5;
+              y' = vy * 5;
+              alpha' = 0;
+              omega' = 0;
+          }
+      };
+
+      state oscillation {
+          body {
+              alpha' = omega;
+              omega' = -g * sin(alpha) / l;
+              vx = omega * cos(alpha);
+              vy = omega * sin(alpha);
+          }
+          onEnter {
+              x = l * sin(alpha);
+              y = l * cos(alpha);
+          }
+      } from shared on (time < point);
+
+      state tear {
+          body {
+              vx = omega * cos(alpha);
+              vy = omega * sin(alpha);
+              x' = vx;
+              y' = vy;
+              //vy' = -g;
+          }
+          onEnter {
+              x = l * sin(alpha);
+              y = -l * cos(alpha);
+          }
+      } from oscillation on (time >= point);
+    `;
+    walkOnText(hsListener, code);
+
+    const system = hsListener.getSystem();
+    const result = evaluateHybridSystem(
+      system,
+      new RungeKutta2Integrator(0.01),
+      0,
+      5
+    );
+
+    await fs.mkdir('./out', { recursive: true });
+    await writeSolutionToCsv(system, result, './out/pendulum_with_tear.csv');
   });
 });

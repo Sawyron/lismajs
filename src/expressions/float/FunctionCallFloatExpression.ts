@@ -76,6 +76,43 @@ const buildInFunctions = new Map<
     }
     return Math.sign(target.evaluate());
   });
+
+  buildInFunctions.set('sin', args => {
+    if (args.length !== 1) {
+      throw new Error('Invalid number of arguments');
+    }
+    const [target] = args;
+    if (!(target instanceof FloatExpression)) {
+      throw new Error('Invalid parameter type');
+    }
+    return Math.sin(target.evaluate());
+  });
+
+  buildInFunctions.set('cos', args => {
+    if (args.length !== 1) {
+      throw new Error('Invalid number of arguments');
+    }
+    const [target] = args;
+    if (!(target instanceof FloatExpression)) {
+      throw new Error('Invalid parameter type');
+    }
+    return Math.cos(target.evaluate());
+  });
+
+  buildInFunctions.set('tan', args => {
+    if (args.length !== 1) {
+      throw new Error('Invalid number of arguments');
+    }
+    const [target] = args;
+    if (!(target instanceof FloatExpression)) {
+      throw new Error('Invalid parameter type');
+    }
+    return Math.tan(target.evaluate());
+  });
+
+  buildInFunctions.set('pi', () => {
+    return Math.PI;
+  });
 }
 
 export class FunctionCallFloatExpression extends FloatExpression {

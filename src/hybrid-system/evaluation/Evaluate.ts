@@ -167,9 +167,9 @@ const validateVariableMap = (
 ) => {
   const missingVariables = variableNames.filter(name => !variableMap.has(name));
   if (missingVariables.length !== 0) {
-    const joinedNames = missingVariables.map(name => `'${name}'`).join(',');
+    const joinedNames = missingVariables.map(name => `'${name}'`).join(', ');
     throw new EvaluationError(
-      `Could not find definition for ${joinedNames} Probably it's not defined for state ${hs.activeState.name} or shared state`
+      `Could not find definition for ${joinedNames}. Probably it's not defined for state '${hs.activeState.name}' or 'shared' state`
     );
   }
 };
